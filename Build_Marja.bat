@@ -26,7 +26,11 @@ powershell -NoProfile -Command "$ErrorActionPreference='Stop'; [Net.ServicePoint
 "%MARJA_UV%" venv --managed-python --python 3.12 --clear "%MARJA_WORK%\portable-venv" || goto :failed
 set "VENV_PY=%MARJA_WORK%\portable-venv\Scripts\python.exe"
 "%MARJA_UV%" pip install --python "%VENV_PY%" "PyQt6>=6.8,<7" "PyQt6-WebEngine>=6.8,<7" "PyInstaller>=6.11,<7" || goto :failed
-echo [2/5] Checking desktop startup...
+echo [2/5] Checking embedded HTML and desktop startup...
+rem When the standalone preview is present, refuse to package an outdated desktop embed.
+if not exist "%MARJA_ROOT%\app\index.html" goto :skipHtmlCheck
+"%VENV_PY%" -c "import hashlib,pathlib,sys,Marja_CAN; p=pathlib.Path(r'app/index.html'); ok=hashlib.sha256(p.read_bytes()).hexdigest()==Marja_CAN.DOCUMENT_SHA256; print('Desktop and HTML match.' if ok else 'ERROR: HTML and desktop differ. Run python tools/build_language.py before packaging.'); sys.exit(0 if ok else 1)" || goto :failed
+:skipHtmlCheck
 "%VENV_PY%" Marja_CAN.py --smoke-test || goto :failed
 echo [3/5] Packaging the Qt WebEngine runtime...
 "%VENV_PY%" -m PyInstaller --noconfirm --clean --onedir --windowed --noupx --name MarjaCAN --workpath "%MARJA_WORK%\work" --distpath "%MARJA_WORK%\dist" --specpath "%MARJA_WORK%" "%MARJA_ROOT%\Marja_CAN.py" || goto :failed
