@@ -89,7 +89,70 @@
     else hide();
   }, true);
   function info(node, text) { node.dataset.byteInfo = text; node.tabIndex = 0; node.classList.add('byte-explained'); node.setAttribute('aria-label', text); }
-  function rawFrames(root, t) {
+  // Map only frames which reproduce the exact assembled message and timestamps.
+  // Other transfers, flow-control frames and padding are never treated as data.
+  function frameAnnotations(run, exchange) {
+    const rows=exchange.frames.slice().sort((a,b)=>a[0]-b[0]);
+    const result=rows.map(()=>({})), model=typeof selectedModel==='function'?selectedModel(run):'';
+    const l=lang(), fa=l==='fa', response=exchange.ans?.p || '';
+    const tr=(a,b)=>fa?a:b;
+    const ids=typeof _d402de164e==='function'?_d402de164e(run).map(x=>parseInt(x,16)):[];
+    const record=exchange.p.slice(2,6);
+    const title=record==='FD3F' ? tr('وضعیت ورودی‌های BCM','BCM input status') : ({F080:tr('ناحیه شناسایی نرم‌افزار','Authentication zone'),FDC0:tr('پیکربندی پایان خط','End-of-line configuration'),F190:'VIN',F18B:tr('تاریخ تولید','Manufacturing date')})[record] || tr('رکورد داده','Data record');
+    const dataInfo=offset=>{
+      const group=window.CANDiagGroups?.lookup(model,exchange.p,response,offset,l);
+      if(group) return group;
+      if(model==='BCMi' && exchange.p==='22FD3F') {
+        const table=[...rootTable.querySelectorAll('.exchange-response .detail table tbody tr, .exchange-response .payloadcard table tbody tr')];
+        const row=table.find(r=>r.cells.length===4 && r.cells[0].textContent.trim()===String(offset));
+        if(row && row.cells[1].textContent.trim()!=='—' && row.cells[2].textContent.trim().toUpperCase()===response.slice(6+offset*2,8+offset*2))
+          return `${tr('ورودی','Input')} ${offset}: ${row.cells[1].textContent.trim()} · ${row.cells[3].textContent.trim()}\nBCMi DiagSpec A13 · ${tr('جدول ۴۳، صفحات PDF ۴۹ تا ۵۳','Table 43, PDF pages 49–53')}`;
+      }
+      return `${title} · ${tr('بایت رکورد','Data-record byte')} ${offset}\n${tr('تعریف تأییدشده‌ای برای این موقعیت در دسترس نیست.','No verified definition for this position is available.')}`;
+    };
+    let rootTable=null;
+    function mapMessage(message, id, start, end, isResponse) {
+      if(!message || !Number.isFinite(start) || !Number.isFinite(end)) return;
+      const candidates=rows.map((r,i)=>({r,i})).filter(({r})=>r[1]===id && r[0]>=start && r[0]<=end);
+      if(!candidates.length || candidates[0].r[0]!==start || candidates[candidates.length-1].r[0]!==end) return;
+      let built='', refs=[], expected=0, seq=1, first=true;
+      for(const {r,i} of candidates) {
+        const bytes=r[2].match(/../g)||[], pci=parseInt(bytes[0],16), type=pci>>4;
+        if(first) {
+          if(type===0) { expected=pci&15; if(!expected) return; refs.push({i,j:0,kind:'sf',length:expected}); for(let j=1;j<bytes.length&&built.length/2<expected;j++){refs.push({i,j,offset:built.length/2});built+=bytes[j];} }
+          else if(type===1 && bytes.length>=3) { expected=((pci&15)<<8)|parseInt(bytes[1],16); if(expected<=7) return; refs.push({i,j:0,kind:'ff',length:expected},{i,j:1,kind:'ff',length:expected}); for(let j=2;j<bytes.length&&built.length/2<expected;j++){refs.push({i,j,offset:built.length/2});built+=bytes[j];} }
+          else return;
+          first=false;
+        } else { if(type!==2 || (pci&15)!==seq) return; seq=(seq+1)%16; refs.push({i,j:0,kind:'cf',sequence:pci&15}); for(let j=1;j<bytes.length&&built.length/2<expected;j++){refs.push({i,j,offset:built.length/2});built+=bytes[j];} }
+      }
+      if(built!==message || built.length/2!==expected) return;
+      // Flow-control travels in the opposite direction within this confirmed transfer.
+      rows.forEach((r,i) => {
+        const bytes=r[2].match(/../g)||[], pci=parseInt(bytes[0],16);
+        if(r[1]===id || !ids.includes(r[1]) || r[0]<start || r[0]>end || (pci>>4)!==3 || bytes.length<3) return;
+        const state=(pci&15), states=fa?['ادامه ارسال','انتظار','سرریز']:['continue sending','wait','overflow'];
+        result[i][0]=tr('کنترل جریان ISO-TP: ','ISO-TP flow control: ')+(states[state] || tr('وضعیت رزرو','reserved status'));
+        result[i][1]=tr('اندازه بلوک: ','Block size: ')+parseInt(bytes[1],16)+tr(' فریم (۰ یعنی بدون محدودیت بلوک).',' frames (0 means no block limit).');
+        result[i][2]=tr('حداقل فاصله بین فریم‌ها (STmin)، مقدار خام: ','Minimum separation time (STmin), raw value: ')+bytes[2];
+        for(let j=3;j<bytes.length;j++) result[i][j]=tr('بایت پرکننده فریم کنترل جریان.','Flow-control padding byte.');
+      });
+      for(const ref of refs) {
+        let explanation='';
+        if(ref.kind==='sf') explanation=tr(`سرآیند انتقال ISO-TP: فریم تکی؛ طول پیام ${ref.length} بایت.`,`ISO-TP single-frame header; message length ${ref.length} bytes.`);
+        else if(ref.kind==='ff') explanation=tr(`سرآیند ISO-TP: فریم اول؛ طول کل پیام ${ref.length} بایت.`,`ISO-TP first-frame header; total message length ${ref.length} bytes.`);
+        else if(ref.kind==='cf') explanation=tr(`سرآیند ISO-TP: فریم ادامه؛ شماره ترتیب ${ref.sequence}.`,`ISO-TP consecutive-frame header; sequence ${ref.sequence}.`);
+        else if(ref.offset===0) explanation=isResponse ? tr('62: پاسخ مثبت به خواندن داده با شناسه (UDS 22).','62: positive response to Read Data by Identifier (UDS 22).') : tr('22: درخواست خواندن داده با شناسه.','22: Read Data by Identifier request.');
+        else if(ref.offset===1 || ref.offset===2) explanation=tr(`شناسه مشترک دو بایتی ${record}: ${title}.`,`Two-byte identifier ${record}: ${title}.`);
+        else if(isResponse) explanation=dataInfo(ref.offset-3);
+        else explanation=tr('پارامتر درخواست؛ تفسیر مستندی در دسترس نیست.','Request parameter; no verified interpretation available.');
+        result[ref.i][ref.j]=explanation;
+      }
+      for(const {r,i} of candidates) { const bytes=r[2].match(/../g)||[]; for(let j=0;j<bytes.length;j++) if(!result[i][j]) result[i][j]=tr('بایت پرکننده خارج از طول پیام ISO-TP.','Padding byte outside the ISO-TP message length.'); }
+    }
+    return {apply(root) { rootTable=root; if(/^22[0-9A-F]{4}$/.test(exchange.p)) {mapMessage(exchange.p,ids[0],exchange.start,exchange.end,false); if(response.startsWith('62'+record)) mapMessage(response,ids[1],exchange.ans.start,exchange.ans.end,true); } return result; }};
+  }
+  function rawFrames(root, t, run, exchange) {
+    const annotations = run && exchange ? frameAnnotations(run, exchange).apply(root) : [];
     for (const cell of root.querySelectorAll('.frame-trace tbody tr td:last-child')) {
       if (cell.dataset.bytesPrepared === 'true') continue;
       const text = cell.textContent.trim();
@@ -104,10 +167,10 @@
       cell.dataset.bytesPrepared = 'true'; cell.replaceChildren(fragment);
     }
     // Re-localize already prepared raw bytes without changing their content.
-    for (const cell of root.querySelectorAll('.frame-trace tbody tr td:last-child[data-bytes-prepared="true"]')) {
+    for (const [rowIndex, cell] of [...root.querySelectorAll('.frame-trace tbody tr td:last-child[data-bytes-prepared="true"]')].entries()) {
       cell.querySelectorAll(':scope > span').forEach((part, index) => {
         const hex = part.textContent;
-        info(part, `${t.byte} ${index + 1}: ${hex} · ${t.binary}: ${parseInt(hex,16).toString(2).padStart(8,'0')} · ${t.unknown}`);
+        info(part, annotations[rowIndex]?.[index] || `${t.byte} ${index + 1}: ${hex} · ${t.unknown}`);
       });
     }
   }
@@ -116,7 +179,7 @@
   function annotate(report, run, exchange) {
     if (!report || !run || !exchange || !report.querySelector('.validation')) return;
     const t = T[lang()], result = assess(run, exchange);
-    rawFrames(report, t);
+    rawFrames(report, t, run, exchange);
     let box = report.querySelector(':scope > .review-verdict');
     if (!box) { box = document.createElement('div'); box.className = 'review-verdict'; report.querySelector('.validation').before(box); }
     box.className = 'review-verdict ' + result.status;
