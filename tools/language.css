@@ -83,3 +83,8 @@ html[lang="en"] button:focus-visible, html[lang="en"] select:focus-visible, html
 .byte-tooltip { position: fixed; z-index: 9999; max-width: min(420px, calc(100vw - 16px)); max-height: calc(100vh - 16px); overflow: auto; padding: 10px 12px; border: 1px solid #8ab6d3; border-radius: 8px; background: #0e2940; color: #fff; font-size: 14px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; box-shadow: 0 5px 18px #0004; pointer-events: none; }
 .byte-tooltip[hidden] { display: none; }
 .review-hint { font-size: 14px; }
+/* High-contrast check states retain labels as well as colour. */
+.review-verdict.green, .validation.review-green, .notice.review-green { background: #c8f3d5; color: #103c20; border-color: #087d32; }
+.review-verdict.orange, .validation.review-orange, .notice.review-orange { background: #ffe3a8; color: #572900; border-color: #b75b00; }
+.review-verdict.red, .validation.review-red, .notice.review-red { background: #ffd4d1; color: #680c0c; border-color: #c4151c; }
+.review-verdict.gray, .validation.review-gray, .notice.review-gray { background: #dce4eb; color: #203747; border-color: #587080; }

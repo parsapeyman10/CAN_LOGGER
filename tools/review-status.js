@@ -153,11 +153,18 @@
       const details = node.closest('details');
       info(node, [details.querySelector('summary')?.textContent, ...[...details.querySelectorAll(':scope > p')].map(p => p.textContent)].filter(Boolean).join(' · '));
     }
+    const model = typeof selectedModel === 'function' ? selectedModel(run) : '';
+    const groupInfo = offset => window.CANDiagGroups?.lookup(model, exchange.p, exchange.ans?.p, offset, lang());
     const response = report.querySelector('.exchange-response');
     if (response) {
+      response.querySelectorAll('.payloadcard > details').forEach((details, offset) => {
+        const node = details.querySelector(':scope > summary .byteval'), explanation = groupInfo(offset);
+        if (node && explanation) info(node, explanation);
+      });
       for (const row of response.querySelectorAll('.detail table tbody tr, .payloadcard table tbody tr')) {
         const cells = row.querySelectorAll('td'); if (cells.length !== 4) continue;
-        info(cells[2], `${t.field}: ${cells[1].textContent} · ${t.interpretation}: ${cells[3].textContent}`);
+        const offset = Number(cells[0].textContent.trim());
+        info(cells[2], groupInfo(offset) || `${t.field}: ${cells[1].textContent} · ${t.interpretation}: ${cells[3].textContent}`);
       }
       const isRead = exchange.p.startsWith('22') && exchange.ans?.p.startsWith('62' + exchange.p.slice(2,6));
       for (const cell of response.querySelectorAll('.hexgrid > span')) {
@@ -170,17 +177,9 @@
             const td = tr.querySelectorAll('td'); return td.length === 4 && Number(td[0].textContent.trim()) === offset && td[2].textContent.trim().toUpperCase() === hex.toUpperCase();
           });
           if (row) { const td = row.querySelectorAll('td'); context = `${t.field}: ${td[1].textContent} · ${t.interpretation}: ${td[3].textContent}`; }
-          // FDC0 is documented as per-byte bit fields rather than a table.
-          if (!context && exchange.p.slice(2,6) === 'FDC0') {
-            const details = response.querySelectorAll('.payloadcard > details')[offset];
-            const value = details?.querySelector(':scope > summary .byteval')?.textContent.trim();
-            if (value?.toUpperCase() === hex.toUpperCase()) {
-              const descriptions = [...details.childNodes].filter(node => node.nodeType !== 1 || node.tagName !== 'SUMMARY').map(node => node.textContent.trim()).filter(Boolean);
-              if (descriptions.length) context = descriptions.join(' · ');
-            }
-          }
+          context = groupInfo(offset) || (exchange.p === '22FDC0' ? '' : context);
         }
-        info(cell, `${t.byte} ${number}: ${hex} · ${t.binary}: ${parseInt(hex,16).toString(2).padStart(8,'0')} · ${context || t.unknown}`);
+        info(cell, context || `${t.byte} ${number}: ${hex} · ${t.unknown}`);
       }
     }
   }
