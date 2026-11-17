@@ -5,7 +5,11 @@ import gzip
 import hashlib
 import re
 import textwrap
+import argparse
 
+parser = argparse.ArgumentParser(description='Build the standalone HTML and optionally update the desktop embed.')
+parser.add_argument('--html-only', action='store_true', help='Do not modify Marja_CAN.py')
+args = parser.parse_args()
 root = Path(__file__).resolve().parents[1]
 html = (root / 'CAN_Exchange_Distribution (1).html').read_text(encoding='utf-8')
 css = (root / 'tools/language.css').read_text(encoding='utf-8')
@@ -13,12 +17,17 @@ js = (root / 'tools/language.js').read_text(encoding='utf-8')
 translations = (root / 'tools/diagnostic-translations.js').read_text(encoding='utf-8')
 js = js.replace('  /* DIAGNOSTIC_TRANSLATIONS */', translations, 1)
 js += '\n' + (root / 'tools/usability.js').read_text(encoding='utf-8')
+js += '\n' + (root / 'tools/explorer.js').read_text(encoding='utf-8')
+js += '\n' + (root / 'tools/review-status.js').read_text(encoding='utf-8')
 assert '</script' not in js.lower()
 html = html.replace('</style>', '\n' + css + '\n</style>', 1)
 html = html.replace('</main>', '</main><script>\n' + js + '\n</script>', 1)
 data = html.encode('utf-8')
 (root / 'app').mkdir(exist_ok=True)
 (root / 'app/index.html').write_bytes(data)
+if args.html_only:
+    print('Built standalone HTML:', len(data), 'bytes, sha256', hashlib.sha256(data).hexdigest())
+    raise SystemExit(0)
 encoded = base64.b64encode(gzip.compress(data, mtime=0)).decode('ascii')
 block = 'DOCUMENT_SHA256 = "' + hashlib.sha256(data).hexdigest() + '"\nDOCUMENT = (\n' + ''.join('    b"' + chunk + '"\n' for chunk in textwrap.wrap(encoded, 120)) + ')'
 path = root / 'Marja_CAN.py'
