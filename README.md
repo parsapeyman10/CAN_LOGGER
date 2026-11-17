@@ -26,6 +26,12 @@ Capture produces two new files without overwriting: a `.raw` file preserving the
 
 Install `pyserial>=3.5,<4` as well as the Qt packages for running from source. `Build_Marja.bat` includes it when building on Windows. `tests/live-capture.py` exercises real pyserial against a Linux pseudo-terminal; it does not replace testing a physical adapter, Bluetooth device or Windows build.
 
+## Standalone Windows capture BAT
+
+Run `Capture_Ports.bat` with `capture_ports.py` and `live_capture.py` in the same folder. Python 3 and `pyserial` must already be installed (`py -3 -m pip install pyserial`). The BAT lists operating-system serial ports, including already-paired Bluetooth Classic SPP ports. Enter one or several port numbers (or `ALL`), enter the serial baud rate, then explicitly confirm. Opening any serial port may assert control lines and interfere with software already using it. Choose only devices you are authorized to monitor. Press Enter to stop; files go into a timestamped `captures/` folder next to the BAT. The folder must be writable and is ignored by Git. On an open or write failure the utility reports the affected port and exits with a failure code.
+
+This is not over-the-air Bluetooth sniffing: it cannot discover or decrypt arbitrary wireless traffic, pair devices, use BLE, connect directly to CANoe, or initialize ELM/OBD devices. The same supported input formats and timestamp/direction limitations described above apply. Serial devices must already be streaming. Windows operation with actual adapters has not yet been verified. `tests/capture-ports.py` exercises discovery/confirmation/capture/stop using a Linux pseudo-terminal.
+
 ## Testing
 
 `python tests/desktop-embed.py` verifies the embedded HTML, SHA-256 and cache replacement without Qt. For desktop testing, create a virtual environment and install `PyQt6` and `PyQt6-WebEngine`, plus the platform's Qt/WebEngine system libraries. Run `python Marja_CAN.py --smoke-test` in a graphical environment. The optional browser smoke test uses `playwright-core` and a Chromium executable: `NODE_PATH=<node_modules> CHROMIUM=<chromium-path> node tests/browser-smoke.cjs`. It opens both sample log formats and exercises navigation and language switching. It does not replace the desktop smoke test or validate every diagnostic interpretation.
