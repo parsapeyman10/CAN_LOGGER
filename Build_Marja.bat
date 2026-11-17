@@ -6,6 +6,7 @@ set "MARJA_WORK=%MARJA_ROOT%\build-marja"
 set "MARJA_OUT=%MARJA_ROOT%\installer"
 set "MARJA_SELF=%~f0"
 if not exist "Marja_CAN.py" goto :sourceMissing
+if not exist "live_capture.py" goto :sourceMissing
 :findCompiler
 if defined ISCC if exist "%ISCC%" goto :build
 set "ISCC="
@@ -25,7 +26,7 @@ powershell -NoProfile -Command "$ErrorActionPreference='Stop'; [Net.ServicePoint
 :haveUv
 "%MARJA_UV%" venv --managed-python --python 3.12 --clear "%MARJA_WORK%\portable-venv" || goto :failed
 set "VENV_PY=%MARJA_WORK%\portable-venv\Scripts\python.exe"
-"%MARJA_UV%" pip install --python "%VENV_PY%" "PyQt6>=6.8,<7" "PyQt6-WebEngine>=6.8,<7" "PyInstaller>=6.11,<7" || goto :failed
+"%MARJA_UV%" pip install --python "%VENV_PY%" "PyQt6>=6.8,<7" "PyQt6-WebEngine>=6.8,<7" "pyserial>=3.5,<4" "PyInstaller>=6.11,<7" || goto :failed
 echo [2/5] Checking embedded HTML and desktop startup...
 rem When the standalone preview is present, refuse to package an outdated desktop embed.
 if not exist "%MARJA_ROOT%\app\index.html" goto :skipHtmlCheck
@@ -52,7 +53,7 @@ popd
 pause
 exit /b 0
 :sourceMissing
-echo Put Marja_CAN.py next to this BAT file.
+echo Put Marja_CAN.py and live_capture.py next to this BAT file.
 goto :failed
 :failed
 popd

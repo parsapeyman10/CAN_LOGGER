@@ -12776,6 +12776,8 @@ def materialize(directory: Path) -> Path:
 def main() -> int:
     from PyQt6.QtCore import QStandardPaths, QTimer, QUrl
     from PyQt6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox
+    from PyQt6.QtGui import QAction
+    from live_capture import open_capture_dialog
     from PyQt6.QtWebEngineWidgets import QWebEngineView
 
     smoke = "--smoke-test" in sys.argv[1:]
@@ -12785,6 +12787,10 @@ def main() -> int:
     root = Path(QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppLocalDataLocation))
     window = QMainWindow()
     window.setWindowTitle("CAN Log Explorer · بررسی لاگ شبکه CAN")
+    toolbar = window.addToolBar("Capture / ضبط")
+    capture_action = QAction("Live capture / ضبط زنده", window)
+    capture_action.triggered.connect(lambda: open_capture_dialog(window))
+    toolbar.addAction(capture_action)
     try:
         page_path = materialize(root / "app")
     except (OSError, ValueError) as error:
