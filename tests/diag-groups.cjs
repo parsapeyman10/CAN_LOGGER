@@ -22,6 +22,11 @@ const {chromium}=require('playwright-core'), assert=require('assert'), path=requ
   assert.equal(await lookup('CUSTOM','22F080',response,0,'en'),null);
   assert.equal(await lookup('NBCM','22F080','62F081'+part,0,'en'),null);
   assert.equal(await lookup('SBCM','22FDC0','62FDC000',0,'en'),null);
+  const sess=(...args)=>page.evaluate(args=>CANSessionInfo.lookup(...args),args);
+  assert.match(await sess('BCMi','1060','506000FA27',4,'en'),/Incomplete/);
+  assert.equal(await sess('BCMi','1060','500100FA2710',2,'en'),null);
+  assert.equal(await sess('CUSTOM','1060','506000FA2710',2,'en'),null);
+  assert.match(await sess('NBCM','1060','506000FA2710',5,'en'),/100000 ms[\s\S]*NBCM DiagSpec V06/);
   console.log('Documented diagnostic groups, model isolation, values, incomplete records and both languages passed.');
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

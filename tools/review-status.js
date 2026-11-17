@@ -89,6 +89,24 @@
     else hide();
   }, true);
   function info(node, text) { node.dataset.byteInfo = text; node.tabIndex = 0; node.classList.add('byte-explained'); node.setAttribute('aria-label', text); }
+  // Session response timing is defined in each supplied specification, as two
+  // big-endian pairs, with different resolutions. Values are reported, not a verdict.
+  function sessionInfo(model, request, response, offset, language) {
+    if (!['BCMi','NBCM','SBCM'].includes(model) || !/^10[0-9A-F]{2}$/.test(request) || !/^50[0-9A-F]{2}(?:[0-9A-F]{2})*$/.test(response) || parseInt(response.slice(2,4),16)!==(parseInt(request.slice(2,4),16)&127)) return null;
+    const fa=language==='fa', tr=(a,b)=>fa?a:b, bytes=response.match(/../g), ref=model==='BCMi'?'BCMi DiagSpec A13 · PDF 22–23':model==='NBCM'?'NBCM DiagSpec V06 · PDF 12–13':'SBCM DiagSpec V10 · PDF 12–13';
+    if(offset===0) return tr('50: پاسخ مثبت کنترل نشست دیاگ.','50: positive Diagnostic Session Control response.')+'\n'+ref;
+    if(offset===1) {
+      const value=bytes[1], sessions=fa?{'01':'پیش‌فرض','02':'برنامه‌ریزی مجدد','03':'خدمات پس از فروش','60':'تأمین‌کننده'}:{'01':'default','02':'reprogramming','03':'after-sales','60':'supplier'};
+      return tr('نشست تأییدشده','Confirmed session')+`: ${value} · `+(sessions[value] || tr('کد ناشناخته','unknown code'))+'\n'+ref;
+    }
+    if(offset>=2 && offset<=5) {
+      const start=offset<4?2:4, group=bytes.slice(start,start+2), name=start===2?'P2Server_max':'P2*Server_max';
+      const description=start===2?tr('زمان پاسخ عادی','Normal response timing'):tr('زمان پاسخ پس از اعلام در حال پردازش (NRC 78)','Response timing after response-pending (NRC 78)');
+      return `${name} · ${description}\n${tr('دو بایت پُرارزش به کم‌ارزش','Two bytes, high then low')}: ${group.join(' ')}`+(group.length===2 ? ` = ${parseInt(group.join(''),16)*(start===2?1:10)} ms` : ` · ${tr('ناقص؛ مقدار قابل محاسبه نیست','Incomplete; value cannot be calculated')}`)+`\n${ref}`;
+    }
+    return null;
+  }
+  window.CANSessionInfo = Object.freeze({lookup:sessionInfo});
   // Map only frames which reproduce the exact assembled message and timestamps.
   // Other transfers, flow-control frames and padding are never treated as data.
   function frameAnnotations(run, exchange) {
@@ -141,15 +159,23 @@
         if(ref.kind==='sf') explanation=tr(`سرآیند انتقال ISO-TP: فریم تکی؛ طول پیام ${ref.length} بایت.`,`ISO-TP single-frame header; message length ${ref.length} bytes.`);
         else if(ref.kind==='ff') explanation=tr(`سرآیند ISO-TP: فریم اول؛ طول کل پیام ${ref.length} بایت.`,`ISO-TP first-frame header; total message length ${ref.length} bytes.`);
         else if(ref.kind==='cf') explanation=tr(`سرآیند ISO-TP: فریم ادامه؛ شماره ترتیب ${ref.sequence}.`,`ISO-TP consecutive-frame header; sequence ${ref.sequence}.`);
-        else if(ref.offset===0) explanation=isResponse ? tr('62: پاسخ مثبت به خواندن داده با شناسه (UDS 22).','62: positive response to Read Data by Identifier (UDS 22).') : tr('22: درخواست خواندن داده با شناسه.','22: Read Data by Identifier request.');
-        else if(ref.offset===1 || ref.offset===2) explanation=tr(`شناسه مشترک دو بایتی ${record}: ${title}.`,`Two-byte identifier ${record}: ${title}.`);
-        else if(isResponse) explanation=dataInfo(ref.offset-3);
-        else explanation=tr('پارامتر درخواست؛ تفسیر مستندی در دسترس نیست.','Request parameter; no verified interpretation available.');
+        else if(exchange.p.startsWith('10') && isResponse && sessionInfo(model,exchange.p,response,ref.offset,l)) explanation=sessionInfo(model,exchange.p,response,ref.offset,l);
+        else if(exchange.p.startsWith('10') && !isResponse && ref.offset===0) explanation=tr('10: درخواست کنترل نشست دیاگ.','10: Diagnostic Session Control request.');
+        else if(exchange.p.startsWith('10') && !isResponse && ref.offset===1) {
+          const sub=message.slice(2,4), session=sessionInfo(model,exchange.p,'50'+(parseInt(sub,16)&127).toString(16).toUpperCase().padStart(2,'0'),1,l);
+          explanation=session ? tr('نشست درخواستی: ','Requested session: ')+session : tr('شماره نشست درخواستی: ','Requested session number: ')+sub;
+          if(parseInt(sub,16)&128) explanation+=' · '+tr('بیت حذف پاسخ مثبت فعال است.','Suppress-positive-response bit is set.');
+        }
+        else if(exchange.p.startsWith('22') && (!isResponse || response.startsWith('62'+record)) && ref.offset===0) explanation=isResponse ? tr('62: پاسخ مثبت به خواندن داده با شناسه (UDS 22).','62: positive response to Read Data by Identifier (UDS 22).') : tr('22: درخواست خواندن داده با شناسه.','22: Read Data by Identifier request.');
+        else if(exchange.p.startsWith('22') && (!isResponse || response.startsWith('62'+record)) && (ref.offset===1 || ref.offset===2)) explanation=tr(`شناسه مشترک دو بایتی ${record}: ${title}.`,`Two-byte identifier ${record}: ${title}.`);
+        else if(exchange.p.startsWith('22') && isResponse && response.startsWith('62'+record)) explanation=dataInfo(ref.offset-3);
+        else if(ref.offset===0) { const section=rootTable.querySelector(isResponse?'.exchange-response':'.exchange-message:not(.exchange-response)'); const part=section?.querySelector('.bytepart'); explanation=part ? [part.querySelector('b')?.textContent,part.querySelector('.byteval')?.textContent,part.querySelector(':scope > span')?.textContent].filter(Boolean).join(' · ') : tr('کد سرویس','Service code')+': '+message.slice(0,2); }
+        else explanation=tr('پارامتر پیام؛ تفسیر مستندی در دسترس نیست.','Message parameter; no verified interpretation available.');
         result[ref.i][ref.j]=explanation;
       }
       for(const {r,i} of candidates) { const bytes=r[2].match(/../g)||[]; for(let j=0;j<bytes.length;j++) if(!result[i][j]) result[i][j]=tr('بایت پرکننده خارج از طول پیام ISO-TP.','Padding byte outside the ISO-TP message length.'); }
     }
-    return {apply(root) { rootTable=root; if(/^22[0-9A-F]{4}$/.test(exchange.p)) {mapMessage(exchange.p,ids[0],exchange.start,exchange.end,false); if(response.startsWith('62'+record)) mapMessage(response,ids[1],exchange.ans.start,exchange.ans.end,true); } return result; }};
+    return {apply(root) { rootTable=root; mapMessage(exchange.p,ids[0],exchange.start,exchange.end,false); if(response) mapMessage(response,ids[1],exchange.ans.start,exchange.ans.end,true); return result; }};
   }
   function rawFrames(root, t, run, exchange) {
     const annotations = run && exchange ? frameAnnotations(run, exchange).apply(root) : [];
@@ -233,7 +259,7 @@
       for (const cell of response.querySelectorAll('.hexgrid > span')) {
         const number = Number(cell.querySelector('small')?.textContent), hex = cell.querySelector('code')?.textContent.trim();
         if (!Number.isInteger(number) || !/^[0-9a-f]{2}$/i.test(hex || '')) continue;
-        let context = '';
+        let context = sessionInfo(model, exchange.p, exchange.ans?.p || '', number-1, lang()) || '';
         if (isRead && number >= 4) {
           const offset = number - 4;
           const row = [...response.querySelectorAll('.detail table tbody tr, .payloadcard table tbody tr')].find(tr => {

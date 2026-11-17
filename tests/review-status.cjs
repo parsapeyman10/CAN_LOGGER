@@ -61,6 +61,24 @@ const assert = require('assert');
     assert.match(await page.locator('#byte-tooltip').innerText(), /Input 0:.*Ignition switch.*Disabled[\s\S]*BCMi DiagSpec A13/);
     const consecutive=frameRows.filter({hasText:'21 '}).first();
     assert.match(await consecutive.locator('td:last-child span').first().getAttribute('data-byte-info'), /consecutive-frame header/);
+    const sessionIndex=await page.evaluate(() => diagnosticExchanges(activeRuns()[0]).out.filter(_6d47b2478d).findIndex(x=>x.p==='1060' && x.ans?.p==='506000FA2710'));
+    assert(sessionIndex>=0, 'sample session exchange exists');
+    await page.locator('#walkIndex').selectOption(String(sessionIndex));
+    await page.waitForFunction(() => document.querySelector('#walkReport .frame-trace tbody tr td:last-child span')?.dataset.byteInfo?.includes('single-frame'));
+    const sessionRows=page.locator('#walkReport .frame-trace tbody tr');
+    const requestRow=sessionRows.filter({hasText:'02 10 60'}), replyRow=sessionRows.filter({hasText:'06 50 60 00 FA 27 10'});
+    await requestRow.locator('td:last-child span').nth(2).hover();
+    assert.match(await page.locator('#byte-tooltip').innerText(), /Requested session.*supplier/);
+    for (const n of [3,4]) { await replyRow.locator('td:last-child span').nth(n).hover(); assert.match(await page.locator('#byte-tooltip').innerText(), /P2Server_max[\s\S]*00 FA = 250 ms[\s\S]*BCMi DiagSpec A13/); }
+    for (const n of [5,6]) { await replyRow.locator('td:last-child span').nth(n).hover(); assert.match(await page.locator('#byte-tooltip').innerText(), /P2\*Server_max[\s\S]*27 10 = 100000 ms/); }
+    const timeGrid=page.locator('#walkReport .exchange-response .hexgrid').first();
+    await timeGrid.locator('xpath=ancestor::details[1]/summary').click();
+    await timeGrid.locator('span').first().hover(); assert.match(await page.locator('#byte-tooltip').innerText(), /P2Server_max[\s\S]*250 ms/);
+    await page.locator('.language-switch').click();
+    await page.waitForFunction(()=>document.documentElement.lang==='fa' && document.querySelector('#walkReport .frame-trace tbody tr td:last-child span')?.dataset.byteInfo?.includes('فریم تکی'));
+    await replyRow.locator('td:last-child span').nth(5).hover(); assert.match(await page.locator('#byte-tooltip').innerText(), /زمان پاسخ[\s\S]*100000 ms/);
+    await page.locator('.language-switch').click();
+    await page.waitForFunction(()=>document.documentElement.lang==='en');
     await page.locator('#walkIndex').selectOption('7');
     await page.waitForFunction(() => document.querySelector('#walkReport .exchange-response .hexgrid span')?.dataset.byteInfo?.includes('RLS='));
     assert.match(await page.locator('#walkReport .exchange-response .hexgrid span').first().getAttribute('data-byte-info'), /Sensor\/mirror configuration.*RLS=/);
