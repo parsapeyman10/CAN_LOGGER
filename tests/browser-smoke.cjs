@@ -1,0 +1,52 @@
+// NODE_PATH=<playwright-core node_modules> CHROMIUM=<path> node tests/browser-smoke.cjs
+const { chromium } = require('playwright-core');
+const path = require('path');
+const assert = require('assert');
+(async () => {
+  const root = path.resolve(__dirname, '..');
+  const env = {...process.env};
+  if (process.env.CHROMIUM_LIBRARY_PATH) env.LD_LIBRARY_PATH = process.env.CHROMIUM_LIBRARY_PATH;
+  const browser = await chromium.launch({executablePath: process.env.CHROMIUM, args: ['--no-sandbox', '--disable-gpu', '--single-process'], env});
+  try {
+    const page = await browser.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('dialog', async d => { errors.push(d.message()); await d.dismiss(); });
+    await page.goto('file://' + path.join(root, 'app/index.html'));
+    await page.waitForFunction(() => typeof document.getElementById('logs').onchange === 'function');
+    assert.equal(await page.locator('html').getAttribute('lang'), 'en');
+    await page.locator('#logs').setInputFiles([path.join(root, 'arisan_1.36.log'), path.join(root, 'Logging.blf')]);
+    await page.waitForFunction(() => document.querySelectorAll('#filelist select[data-model]').length >= 2, null, {timeout: 30000});
+    assert.match(await page.locator('#uploads').innerText(), /added/);
+    await page.locator('[data-tab="walk"]').click();
+    await page.waitForFunction(() => document.querySelector('#walkIndex').options.length > 1);
+    assert.match(await page.locator('#walkIndex option').first().textContent(), /Read data record/);
+    assert.match(await page.locator('#walkReport').innerText(), /Data length mismatch: received 59 bytes/);
+    assert.match(await page.locator('#walkReport').innerText(), /The device sent positive reply 62/);
+    const originalValue = await page.locator('#walkIndex').inputValue();
+    await page.locator('#walkNext').click();
+    assert.notEqual(await page.locator('#walkIndex').inputValue(), originalValue);
+    await page.locator('[data-tab="compare"]').click();
+    assert.ok(await page.locator('#leftRun option').count() >= 2);
+    assert.ok(await page.locator('#rightRun option').count() >= 1);
+    await page.locator('[data-tab="canFrames"]').click();
+    await page.locator('#framesIds').fill('ZZZ');
+    await page.locator('#framesAdd').click();
+    assert.match(await page.locator('#framesError').innerText(), /hexadecimal ID/);
+    await page.locator('#framesIds').fill('752');
+    await page.locator('#framesAdd').click();
+    assert.match(await page.locator('#framesTags').innerText(), /752/);
+    await page.locator('[data-tab="faults"]').click();
+    assert.match(await page.locator('#faultList').innerText(), /requests need review/);
+    await page.locator('.language-switch').click();
+    assert.equal(await page.locator('html').getAttribute('lang'), 'fa');
+    assert.match(await page.locator('#faultList').innerText(), /درخواست نیازمند بررسی/);
+    await page.reload();
+    await page.waitForFunction(() => typeof document.getElementById('logs').onchange === 'function');
+    assert.equal(await page.locator('html').getAttribute('lang'), 'fa');
+    await page.locator('.language-switch').click();
+    assert.equal(await page.locator('html').getAttribute('lang'), 'en');
+    assert.deepEqual(errors, []);
+    console.log('Browser smoke test passed: both log formats, navigation, language switching and persistence.');
+  } finally { await browser.close(); }
+})().catch(e => { console.error(e); process.exitCode = 1; });
