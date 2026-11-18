@@ -15,7 +15,7 @@ const assert = require('assert');
     await page.goto('file://' + path.join(root, 'app/index.html'));
     await page.waitForFunction(() => typeof document.getElementById('logs').onchange === 'function');
     assert.equal(await page.locator('html').getAttribute('lang'), 'en');
-    assert.equal(await page.locator('.release-badge').innerText(), 'BETA 1.00');
+    assert.equal(await page.locator('.release-badge').innerText(), require('fs').readFileSync(path.join(root,'VERSION'),'utf8').trim());
     await page.locator('#logs').setInputFiles([path.join(root, 'arisan_1.36.log'), path.join(root, 'Logging.blf')]);
     await page.waitForFunction(() => document.querySelectorAll('#filelist select[data-model]').length >= 2, null, {timeout: 30000});
     assert.match(await page.locator('#uploads').innerText(), /added/);
@@ -47,7 +47,7 @@ const assert = require('assert');
     assert.equal(await page.locator('html').getAttribute('lang'), 'fa');
     await page.locator('.language-switch').click();
     assert.equal(await page.locator('html').getAttribute('lang'), 'en');
-    assert.equal(await page.locator('.release-badge').innerText(), 'BETA 1.00');
+    assert.equal(await page.locator('.release-badge').innerText(), require('fs').readFileSync(path.join(root,'VERSION'),'utf8').trim());
     assert.deepEqual(errors, []);
     console.log('Browser smoke test passed: both log formats, navigation, language switching and persistence.');
   } finally { await browser.close(); }

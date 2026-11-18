@@ -64,8 +64,8 @@ exit /b 1
 ArchitecturesAllowed=x64
 AppId=MarjaCAN.Beta
 AppName=Marja CAN BETA
-AppVersion=1.00
-AppVerName=Marja CAN BETA 1.00
+AppVersion=1.01
+AppVerName=Marja CAN BETA 1.01
 DefaultDirName={localappdata}\Programs\MarjaCAN_BETA
 PrivilegesRequired=lowest
 DefaultGroupName=Marja CAN BETA

@@ -1,9 +1,10 @@
-/* HTML-only workflow preview. Diagnostic facts come from the existing analysis functions. */
+/* Bilingual task navigation and evidence-based summaries. */
 (() => {
   const $ = id => document.getElementById(id);
   const copy = {
     en: {
       heading: 'What would you like to do?', sub: 'Choose a task. You can change your choice at any time.',
+      capture: 'Record a log', captureDesc: 'Connect a serial or paired Bluetooth SPP source.', open: 'Open a log', openDesc: 'Choose a recorded file to review.', desktopOnly: 'Live capture is available in the desktop app; here you can open a saved log.',
       review: 'Review one log', reviewDesc: 'Explore requests, replies and possible issues.',
       compare: 'Compare two logs', compareDesc: 'Find differences between two recordings.',
       frames: 'Find CAN messages', framesDesc: 'Inspect messages by CAN identifier.',
@@ -25,6 +26,7 @@
     },
     fa: {
       heading: 'می‌خواهید چه کاری انجام دهید؟', sub: 'یک مسیر را انتخاب کنید؛ هر زمان می‌توانید مسیر را عوض کنید.',
+      capture: 'ضبط لاگ', captureDesc: 'اتصال منبع سریال یا بلوتوث SPP جفت‌شده.', open: 'باز کردن لاگ', openDesc: 'فایل ثبت‌شده را برای بررسی انتخاب کنید.', desktopOnly: 'ضبط زنده در برنامهٔ دسکتاپ است؛ در این صفحه می‌توانید لاگ ذخیره‌شده را باز کنید.',
       review: 'بررسی یک لاگ', reviewDesc: 'مرور درخواست‌ها، پاسخ‌ها و موارد نیازمند بررسی.',
       compare: 'مقایسهٔ دو لاگ', compareDesc: 'پیداکردن تفاوت‌های دو فایل ثبت‌شده.',
       frames: 'جست‌وجوی پیام‌های CAN', framesDesc: 'دیدن پیام‌ها با شناسهٔ CAN.',
@@ -49,16 +51,23 @@
   const card = document.createElement('section'); card.className = 'task-start'; card.setAttribute('aria-labelledby', 'task-heading');
   const title = document.createElement('h2'); title.id = 'task-heading'; const sub = document.createElement('p');
   const grid = document.createElement('div'); grid.className = 'task-grid';
-  const tasks = [ ['walk','review','reviewDesc','01'], ['compare','compare','compareDesc','02'], ['canFrames','frames','framesDesc','03'] ];
+  const tasks = [ ['capture','capture','captureDesc','01'], ['open','open','openDesc','02'], ['compare','compare','compareDesc','03'] ];
   const buttons = tasks.map(([id, key, desc, number]) => {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'task-card';
     const marker = document.createElement('span'); marker.className = 'task-number'; marker.textContent = number;
     const body = document.createElement('span'); const label = document.createElement('strong'); const text = document.createElement('small');
     body.append(label, text); button.append(marker, body);
-    button.addEventListener('click', () => $(id).hidden && document.querySelector(`[data-tab="${id}"]`).click());
+    button.addEventListener('click', () => {
+      if (id === 'capture') {
+        if (window.CANDesktop === true) window.location.href = 'marja://capture';
+        else { status.hidden = false; status.textContent = copy[lang()].desktopOnly; }
+      } else if (id === 'open') $('logs').click();
+      else if ($(id).hidden) document.querySelector(`[data-tab="${id}"]`).click();
+    });
     grid.append(button); return {button, label, text, key, desc};
   });
-  card.append(title, sub, grid); document.querySelector('#setup .easy-guide').before(card);
+  const status = document.createElement('p'); status.id = 'capture-import-status'; status.hidden = true; status.setAttribute('role', 'status');
+  card.append(title, sub, grid, status); document.querySelector('#setup .easy-guide').before(card);
   const panels = {};
   for (const [id, anchor] of [['walk','walkReport'], ['faults','faultList']]) {
     const panel = document.createElement('section'); panel.className = 'analysis-summary'; panel.hidden = true; panel.setAttribute('aria-live','polite');

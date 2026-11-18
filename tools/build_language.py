@@ -21,6 +21,7 @@ translations = (root / 'tools/diagnostic-translations.js').read_text(encoding='u
 js = js.replace('  /* DIAGNOSTIC_TRANSLATIONS */', translations, 1)
 js += '\n' + (root / 'tools/usability.js').read_text(encoding='utf-8')
 js += '\n' + (root / 'tools/explorer.js').read_text(encoding='utf-8')
+js += '\n' + (root / 'tools/capture-workflow.js').read_text(encoding='utf-8')
 js += '\n' + (root / 'tools/diag-groups.js').read_text(encoding='utf-8')
 js += '\n' + (root / 'tools/review-status.js').read_text(encoding='utf-8')
 assert '</script' not in js.lower()

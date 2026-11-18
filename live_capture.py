@@ -161,7 +161,7 @@ class Capture:
         return self.thread is not None and self.thread.is_alive()
 
 
-def open_capture_dialog(parent):
+def open_capture_dialog(parent, language='en'):
     """Native dialog. Bluetooth Classic SPP must first be paired by the OS."""
     from PyQt6.QtCore import QTimer
     from PyQt6.QtWidgets import (QComboBox, QDialog, QFileDialog, QFormLayout,
@@ -177,12 +177,13 @@ def open_capture_dialog(parent):
         def __init__(self):
             super().__init__(parent)
             self.capture = None
+            self.analysis_path = None
             self.out = None
             self.last_error = None
             self.setMinimumSize(680, 490)
             layout = QVBoxLayout(self)
             top = QHBoxLayout()
-            self.language = QComboBox(); self.language.addItems(['English', 'فارسی'])
+            self.language = QComboBox(); self.language.addItems(['English', 'فارسی']); self.language.setCurrentIndex(1 if language == 'fa' else 0)
             top.addStretch(); top.addWidget(self.language); layout.addLayout(top)
             self.guide = QLabel(); self.guide.setWordWrap(True); layout.addWidget(self.guide)
             form = QFormLayout(); layout.addLayout(form)
@@ -194,8 +195,8 @@ def open_capture_dialog(parent):
             self.path_label = QLabel(); self.path = QLabel(); self.path.setWordWrap(True)
             pathrow = QHBoxLayout(); pathrow.addWidget(self.path, 1); self.choose = QPushButton(); pathrow.addWidget(self.choose)
             form.addRow(self.path_label, pathrow)
-            actions = QHBoxLayout(); self.start_button = QPushButton(); self.stop_button = QPushButton(); self.close_button = QPushButton()
-            for button in (self.start_button, self.stop_button, self.close_button): actions.addWidget(button)
+            actions = QHBoxLayout(); self.start_button = QPushButton(); self.stop_button = QPushButton(); self.analyze_button = QPushButton(); self.close_button = QPushButton()
+            for button in (self.start_button, self.stop_button, self.analyze_button, self.close_button): actions.addWidget(button)
             layout.addLayout(actions)
             self.status = QLabel(); self.status.setWordWrap(True); layout.addWidget(self.status)
             self.preview = QPlainTextEdit(); self.preview.setReadOnly(True); self.preview.document().setMaximumBlockCount(200); layout.addWidget(self.preview, 1)
@@ -205,6 +206,7 @@ def open_capture_dialog(parent):
             self.choose.clicked.connect(self.choose_path)
             self.start_button.clicked.connect(self.start)
             self.stop_button.clicked.connect(self.stop)
+            self.analyze_button.clicked.connect(self.analyze)
             self.close_button.clicked.connect(self.close)
             self.refresh(); self.translate(); self.update_capture()
 
@@ -223,6 +225,7 @@ def open_capture_dialog(parent):
             self.choose.setText(self.text('Choose…', 'انتخاب…'))
             self.start_button.setText(self.text('Start recording', 'شروع ضبط'))
             self.stop_button.setText(self.text('Stop', 'توقف'))
+            self.analyze_button.setText(self.text('Analyze saved log', 'تحلیل لاگ ذخیره‌شده'))
             self.close_button.setText(self.text('Close', 'بستن'))
             if not self.out: self.path.setText(self.text('Choose a new .log file', 'یک فایل .log جدید انتخاب کنید'))
             self.update_capture()
@@ -252,8 +255,17 @@ def open_capture_dialog(parent):
                 capture.start()
                 self.capture = capture; self.last_error = None; self.preview.clear()
             except Exception as exc:
-                QMessageBox.warning(self, self.text('Unable to start', 'شروع ضبط ممکن نیست'), str(exc))
+                if isinstance(exc, FileExistsError):
+                    hint = self.text('A capture file already exists. Choose a different save name.', 'فایل ضبط از قبل وجود دارد. نام دیگری برای ذخیره انتخاب کنید.')
+                else:
+                    hint = self.text('Check the port, cable or Bluetooth pairing, baud rate, and whether another app is using the port.', 'پورت، کابل یا جفت‌بودن بلوتوث، سرعت و استفاده‌نشدن پورت توسط برنامهٔ دیگر را بررسی کنید.')
+                QMessageBox.warning(self, self.text('Unable to start', 'شروع ضبط ممکن نیست'), hint + '\n\n' + str(exc))
             self.update_capture()
+
+        def analyze(self):
+            if self.capture and not self.capture.running and self.capture.frames > 0:
+                self.analysis_path = self.capture.log_path
+                self.accept()
 
         def stop(self):
             if self.capture: self.capture.stop()
@@ -263,6 +275,7 @@ def open_capture_dialog(parent):
             capture = self.capture
             running = bool(capture and capture.running)
             self.start_button.setEnabled(not running); self.stop_button.setEnabled(running)
+            self.analyze_button.setEnabled(bool(capture and not running and capture.frames > 0))
             self.refresh_button.setEnabled(not running); self.port.setEnabled(not running); self.baud.setEnabled(not running); self.choose.setEnabled(not running)
             if not capture:
                 self.status.setText(self.text('Ready. Files are never overwritten.', 'آماده. فایل‌های موجود بازنویسی نمی‌شوند.')); return
@@ -271,10 +284,15 @@ def open_capture_dialog(parent):
                 except queue.Empty: break
                 if item is not None: self.preview.appendPlainText(item)
             state = self.text('Recording' if running else 'Stopped', 'در حال ضبط' if running else 'متوقف شد')
-            self.status.setText(f'{state} · {self.text("Frames", "فریم")}: {capture.frames} · {self.text("Unparsed lines", "خط نامشخص")}: {capture.unparsed} · {self.text("Raw bytes", "بایت خام")}: {capture.bytes_read} · {self.text("Preview lines skipped", "خط نمایش‌داده‌نشده")}: {capture.display_dropped}\n{self.text("Time: PC reception; SLCAN assumed Rx; raw saved separately.", "زمان: دریافت رایانه؛ جهت SLCAN دریافتی فرض می‌شود؛ دادهٔ خام جداگانه ذخیره شد.")}')
+            advice = ''
+            if not running and capture.frames == 0:
+                advice = '\n' + self.text('No supported frames. Check the baud rate and whether the source is already streaming SLCAN or BUSMASTER; raw data is saved.', 'فریم پشتیبانی‌شده‌ای پیدا نشد. سرعت سریال و ارسال SLCAN یا BUSMASTER توسط منبع را بررسی کنید؛ دادهٔ خام ذخیره شده است.')
+            elif not running and capture.frames > 0:
+                advice = '\n' + self.text('Next: select Analyze saved log to review this recording.', 'قدم بعدی: برای بررسی ضبط، تحلیل لاگ ذخیره‌شده را انتخاب کنید.')
+            self.status.setText(f'{state} · {self.text("Frames", "فریم")}: {capture.frames} · {self.text("Unparsed lines", "خط نامشخص")}: {capture.unparsed} · {self.text("Raw bytes", "بایت خام")}: {capture.bytes_read} · {self.text("Preview lines skipped", "خط نمایش‌داده‌نشده")}: {capture.display_dropped}\n{self.text("Time: PC reception; SLCAN assumed Rx; raw saved separately.", "زمان: دریافت رایانه؛ جهت SLCAN دریافتی فرض می‌شود؛ دادهٔ خام جداگانه ذخیره شد.")}' + advice)
             if capture.error and not running and capture.error != self.last_error:
                 self.last_error = capture.error
-                QMessageBox.warning(self, self.text('Capture stopped', 'ضبط متوقف شد'), capture.error)
+                QMessageBox.warning(self, self.text('Capture stopped', 'ضبط متوقف شد'), self.text('Check the connection and available disk space. The saved data may be incomplete.', 'اتصال و فضای ذخیره‌سازی را بررسی کنید. دادهٔ ذخیره‌شده ممکن است ناقص باشد.') + '\n\n' + capture.error)
 
         def closeEvent(self, event):
             if self.capture and self.capture.running:
@@ -286,3 +304,4 @@ def open_capture_dialog(parent):
 
     dialog = Dialog()
     dialog.exec()
+    return dialog.analysis_path, ('fa' if dialog.language.currentIndex() else 'en')
