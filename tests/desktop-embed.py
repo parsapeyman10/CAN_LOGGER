@@ -8,7 +8,13 @@ root = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location('marja_can', root / 'Marja_CAN.py')
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
+version = (root / 'VERSION').read_text(encoding='ascii').strip()
+assert module.APP_VERSION == version
 html = (root / 'app/index.html').read_bytes()
+assert version.encode('ascii') in html
+bat = (root / 'Build_Marja.bat').read_text(encoding='utf-8')
+assert f'AppVersion={version.split()[1]}' in bat
+assert f'AppVerName=Marja CAN {version}' in bat
 assert hashlib.sha256(html).hexdigest() == module.DOCUMENT_SHA256
 with tempfile.TemporaryDirectory() as directory:
     target = module.materialize(Path(directory))

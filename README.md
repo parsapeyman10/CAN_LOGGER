@@ -1,5 +1,9 @@
 # CAN_LOGGER
 
+## Release channel
+
+Current version: **BETA 1.00**. This is a development build, not an ORG (official) release. Continue in the BETA channel and advance the fractional version for future updates (1.01, 1.02, …); do not promote to ORG or change the major version unless the project owner explicitly instructs it. `VERSION` is the version source for the HTML badge, desktop window title and installer metadata. After editing it, run `python3 tools/build_language.py` to regenerate both HTML and the desktop embed and synchronize the installer version. The Windows beta installer uses its own product ID, installation directory and BETA-labelled output names.
+
 ## Language and getting started
 
 The desktop app opens in English by default. Use **🌐 فارسی / 🌐 English** at the top to switch languages; your selection is remembered on this device when local storage is available. Persian retains the original interface and diagnostic logic.

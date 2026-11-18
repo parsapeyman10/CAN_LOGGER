@@ -38,8 +38,8 @@ echo [3/5] Packaging the Qt WebEngine runtime...
 echo [4/5] Testing packaged executable...
 "%VENV_PY%" -c "import os, pathlib, subprocess; exe=pathlib.Path(os.environ['MARJA_WORK'])/'dist'/'MarjaCAN'/'MarjaCAN.exe'; subprocess.run([str(exe),'--smoke-test'],check=True,timeout=90)" || goto :failed
 echo [5/5] Creating portable ZIP...
-"%VENV_PY%" -c "import pathlib,shutil,os; out=pathlib.Path(os.environ['MARJA_OUT']); base=out/'MarjaCAN_Portable_x64'; archive=shutil.make_archive(str(base)+'.tmp','zip',pathlib.Path(os.environ['MARJA_WORK'])/'dist','MarjaCAN'); os.replace(archive,base.with_suffix('.zip'))" || goto :failed
-echo Portable ZIP ready: "%MARJA_OUT%\MarjaCAN_Portable_x64.zip"
+"%VENV_PY%" -c "import pathlib,shutil,os; out=pathlib.Path(os.environ['MARJA_OUT']); base=out/'MarjaCAN_BETA_Portable_x64'; archive=shutil.make_archive(str(base)+'.tmp','zip',pathlib.Path(os.environ['MARJA_WORK'])/'dist','MarjaCAN'); os.replace(archive,base.with_suffix('.zip'))" || goto :failed
+echo Portable ZIP ready: "%MARJA_OUT%\MarjaCAN_BETA_Portable_x64.zip"
 if defined ISCC goto :installer
 echo Inno Setup 6 was not found. The portable ZIP is ready to distribute.
 goto :success
@@ -47,7 +47,7 @@ goto :success
 echo Compiling optional installer...
 powershell -NoProfile -Command "$lines=[IO.File]::ReadAllLines($env:MARJA_SELF); $n=[Array]::IndexOf($lines,':INNO_SCRIPT'); if($n -lt 0){exit 1}; [IO.File]::WriteAllLines((Join-Path $env:MARJA_WORK 'Marja.iss'),$lines[($n+1)..($lines.Length-1)])" || goto :failed
 "%ISCC%" "%MARJA_WORK%\Marja.iss" || goto :failed
-echo Installer ready: "%MARJA_OUT%\MarjaCAN_Setup.exe"
+echo Installer ready: "%MARJA_OUT%\MarjaCAN_BETA_Setup.exe"
 :success
 popd
 pause
@@ -62,20 +62,21 @@ exit /b 1
 :INNO_SCRIPT
 [Setup]
 ArchitecturesAllowed=x64
-AppId=MarjaCAN.Desktop
-AppName=Marja CAN
-AppVersion=1.0
-DefaultDirName={localappdata}\Programs\MarjaCAN
+AppId=MarjaCAN.Beta
+AppName=Marja CAN BETA
+AppVersion=1.00
+AppVerName=Marja CAN BETA 1.00
+DefaultDirName={localappdata}\Programs\MarjaCAN_BETA
 PrivilegesRequired=lowest
-DefaultGroupName=Marja CAN
+DefaultGroupName=Marja CAN BETA
 DisableProgramGroupPage=yes
 UninstallDisplayIcon={app}\MarjaCAN.exe
 OutputDir={#GetEnv("MARJA_OUT")}
-OutputBaseFilename=MarjaCAN_Setup
+OutputBaseFilename=MarjaCAN_BETA_Setup
 Compression=lzma2/fast
 SolidCompression=yes
 WizardStyle=modern
 [Files]
 Source: "{#GetEnv("MARJA_WORK")}\dist\MarjaCAN\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 [Icons]
-Name: "{group}\Marja CAN"; Filename: "{app}\MarjaCAN.exe"
+Name: "{group}\Marja CAN BETA"; Filename: "{app}\MarjaCAN.exe"

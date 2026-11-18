@@ -88,3 +88,4 @@ html[lang="en"] button:focus-visible, html[lang="en"] select:focus-visible, html
 .review-verdict.orange, .validation.review-orange, .notice.review-orange { background: #ffe3a8; color: #572900; border-color: #b75b00; }
 .review-verdict.red, .validation.review-red, .notice.review-red { background: #ffd4d1; color: #680c0c; border-color: #c4151c; }
 .review-verdict.gray, .validation.review-gray, .notice.review-gray { background: #dce4eb; color: #203747; border-color: #587080; }
+.release-badge { display: inline-block; margin-top: 6px; padding: 4px 10px; border: 1px solid #b26c16; border-radius: 999px; background: #fff0d3; color: #603400; font: 700 12px/1.2 system-ui, sans-serif; letter-spacing: .04em; }
