@@ -1,0 +1,91 @@
+/* Larger controls and a short, plain-language starting guide in English mode. */
+.language-switch { margin: 12px; min-height: 44px; font-size: 16px; }
+html[lang="en"] button, html[lang="en"] .upload, html[lang="en"] select { min-height: 44px; font-size: 16px; }
+html[lang="en"] .easy-guide { background: #eef7ff; border: 2px solid #86b9e8; border-radius: 14px; padding: 18px 22px; margin: 16px 0; line-height: 1.6; color: #143454; }
+.easy-guide[hidden] { display: none; }
+.easy-guide strong { font-size: 1.2em; }
+.easy-guide ol { padding-inline-start: 1.5em; }
+.easy-guide p { margin: 8px 0 0; }
+.easy-guide .translation-note { font-size: .9em; }
+html[lang="en"] .requestNav { direction: ltr; }
+html[lang="en"] .easy-hint { padding: 12px 16px; background: #f0f7ff; border-inline-start: 4px solid #408acb; border-radius: 6px; line-height: 1.55; }
+.easy-hint[hidden] { display: none; }
+html[lang="en"] button:focus-visible, html[lang="en"] select:focus-visible, html[lang="en"] input:focus-visible, html[lang="en"] .upload:focus-within { outline: 3px solid #0869ba; outline-offset: 2px; }
+/* Keep the language switch legible in the dark header and offer an obvious next step. */
+.masthead { justify-content: space-between; gap: 12px; }
+.language-switch { color: #182a43; background: #fff; border: 2px solid #b9c9dc; font-weight: 700; white-space: nowrap; }
+.language-switch:hover { background: #e9f4ff; color: #182a43; }
+.language-switch:focus-visible { outline: 3px solid #ffcc66; outline-offset: 3px; }
+.easy-guide { background: #eef7ff; border: 2px solid #86b9e8; border-radius: 14px; padding: 18px 22px; margin: 16px 0; line-height: 1.65; color: #143454; }
+.easy-guide strong { font-size: 1.2em; }
+.easy-guide ol { padding-inline-start: 1.5em; }
+.easy-hint { padding: 12px 16px; background: #f0f7ff; border-inline-start: 4px solid #408acb; border-radius: 6px; line-height: 1.55; }
+.workflow-next { background: #eef7f1; border-inline-start: 4px solid #3d7861; padding: 10px 14px; border-radius: 6px; line-height: 1.55; }
+.workflow-empty { background: #fff8e8; border: 1px solid #dbb562; border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+.workflow-empty p { margin: 0 0 8px; }
+.workflow-empty button { min-height: 44px; background: #6b3b26; color: #fff; font-weight: 700; }
+/* Avoid a hidden second scroll area in the detailed request report. */
+#walkReport { height: auto; min-height: 0; overflow: visible; }
+.pairscroll { height: auto; min-height: 0; }
+@media (max-width: 540px) { .wordmark { width: min(75%, 585px); } .language-switch { margin: 4px; } }
+.workflow-bottom-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; border-top: 1px solid #dfcbb4; padding-top: 14px; margin-top: 18px; }
+.workflow-bottom-nav button { min-width: 120px; min-height: 44px; }
+.workflow-bottom-nav span { font-weight: 700; }
+.workflow-bottom-nav[hidden] { display: none; }
+/* Task cards and evidence-based overview for the HTML preview. */
+.task-start { margin: 16px 0; padding: clamp(18px, 2.4vw, 28px); border-radius: 15px; background: #102b50; color: #fff; }
+.task-start h2 { color: #fff; margin: 0 0 4px; }
+.task-start > p { color: #d9e8fa; margin: 0 0 16px; }
+.task-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+.task-grid .task-card { display: flex; align-items: flex-start; gap: 12px; text-align: start; background: #fff; color: #132d4a; border: 2px solid transparent; border-radius: 10px; padding: 16px; min-height: 108px; }
+.task-grid .task-card:hover { background: #f0f8ff; border-color: #72b4ed; }
+.task-card strong, .task-card small { display: block; }
+.task-card strong { font-size: 17px; margin-bottom: 5px; }
+.task-card small { font-size: 14px; line-height: 1.45; color: #415b73; }
+.task-number { flex: 0 0 auto; padding: 5px 8px; border-radius: 8px; background: #e3f1ff; color: #174d7e; font-weight: 700; }
+.analysis-summary { margin: 16px 0; padding: clamp(16px, 2vw, 22px); border: 1px solid #b9cfe1; border-radius: 12px; background: #f2f8fd; color: #19364f; }
+.analysis-summary h3 { margin: 0 0 4px; color: #183956; }
+.analysis-summary h4 { margin: 0 0 8px; font-size: 17px; }
+.analysis-summary p { margin: 8px 0; line-height: 1.55; }
+.summary-file { overflow-wrap: anywhere; }
+.summary-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+.summary-metric { padding: 12px; background: #fff; border: 1px solid #d5e2eb; border-radius: 9px; }
+.summary-metric strong, .summary-metric span { display: block; }
+.summary-metric strong { font-size: 24px; color: #1c5277; font-variant-numeric: tabular-nums; }
+.summary-metric span { font-size: 14px; line-height: 1.4; }
+.summary-current { border-top: 1px solid #c9dce9; margin-top: 14px; padding-top: 14px; }
+.summary-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; margin-inline-end: 8px; font-weight: 700; border: 1px solid; }
+.summary-badge.warn { color: #793a0b; background: #fff0d5; border-color: #c9964c; }
+.summary-badge.info { color: #174c72; background: #e4f3ff; border-color: #8ebcdb; }
+.summary-badge.neutral { color: #245d46; background: #e9f5ed; border-color: #93c6aa; }
+.summary-bytes { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.summary-next { font-weight: 600; }
+.summary-note { color: #385b72; font-size: 14px; }
+.summary-action { min-height: 44px; color: #fff; background: #205c86; font-weight: 700; border-color: #205c86; }
+.summary-action:hover { color: #fff; background: #17496c; }
+@media (max-width: 700px) { .task-grid { grid-template-columns: 1fr; } .task-grid .task-card { min-height: 76px; } .summary-metrics { grid-template-columns: 1fr; } }
+@media (min-width: 701px) { .compare-summary .summary-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* A colour is always accompanied by a status label; unknown checks stay neutral. */
+.review-verdict { margin: 14px 0; padding: 15px 18px; border: 2px solid; border-inline-start-width: 6px; border-radius: 10px; line-height: 1.55; }
+.review-verdict strong { display: block; font-size: 18px; }
+.review-verdict p { margin: 6px 0; }
+.review-verdict small { display: block; }
+.review-verdict.green, .validation.review-green, .notice.review-green { color: #173c29; background: #e8f7ed; border-color: #28864d; }
+.review-verdict.orange, .validation.review-orange, .notice.review-orange { color: #5a310a; background: #fff0d7; border-color: #c47916; }
+.review-verdict.red, .validation.review-red, .notice.review-red { color: #63221e; background: #fdebe9; border-color: #be3832; }
+.review-verdict.gray, .validation.review-gray, .notice.review-gray { color: #284153; background: #eef4f8; border-color: #718b9b; }
+.review-row-green td { background: #e8f7ed; }
+.review-row-orange td { background: #fff0d7; }
+.review-row-red td { background: #fdebe9; }
+.review-row-gray td { background: #eef4f8; }
+.byte-explained { border-radius: 3px; text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+.byte-explained:focus-visible { outline: 3px solid #0b649e; outline-offset: 2px; }
+.byte-tooltip { position: fixed; z-index: 9999; max-width: min(420px, calc(100vw - 16px)); max-height: calc(100vh - 16px); overflow: auto; padding: 10px 12px; border: 1px solid #8ab6d3; border-radius: 8px; background: #0e2940; color: #fff; font-size: 14px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; box-shadow: 0 5px 18px #0004; pointer-events: none; }
+.byte-tooltip[hidden] { display: none; }
+.review-hint { font-size: 14px; }
+/* High-contrast check states retain labels as well as colour. */
+.review-verdict.green, .validation.review-green, .notice.review-green { background: #c8f3d5; color: #103c20; border-color: #087d32; }
+.review-verdict.orange, .validation.review-orange, .notice.review-orange { background: #ffe3a8; color: #572900; border-color: #b75b00; }
+.review-verdict.red, .validation.review-red, .notice.review-red { background: #ffd4d1; color: #680c0c; border-color: #c4151c; }
+.review-verdict.gray, .validation.review-gray, .notice.review-gray { background: #dce4eb; color: #203747; border-color: #587080; }
+.release-badge { display: inline-block; margin-top: 6px; padding: 4px 10px; border: 1px solid #b26c16; border-radius: 999px; background: #fff0d3; color: #603400; font: 700 12px/1.2 system-ui, sans-serif; letter-spacing: .04em; }

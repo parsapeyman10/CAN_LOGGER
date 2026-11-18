@@ -1,0 +1,53 @@
+// NODE_PATH=<node_modules> CHROMIUM=<browser> node tests/usability.cjs
+const { chromium } = require('playwright-core');
+const path = require('path');
+const assert = require('assert');
+(async () => {
+  const root = path.resolve(__dirname, '..');
+  const env = {...process.env};
+  if (env.CHROMIUM_LIBRARY_PATH) env.LD_LIBRARY_PATH = env.CHROMIUM_LIBRARY_PATH;
+  const browser = await chromium.launch({executablePath: env.CHROMIUM, args: ['--no-sandbox', '--disable-gpu', '--single-process'], env});
+  try {
+    const page = await browser.newPage({viewport: {width: 375, height: 800}});
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await page.goto('file://' + path.join(root, 'app/index.html'));
+    await page.waitForFunction(() => typeof document.getElementById('logs').onchange === 'function');
+    assert.equal(await page.locator('html').getAttribute('lang'), 'en');
+    const color = await page.locator('.language-switch').evaluate(el => ({color: getComputedStyle(el).color, background: getComputedStyle(el).backgroundColor}));
+    assert.notEqual(color.color, color.background);
+    await page.locator('[data-tab="walk"]').click();
+    assert.equal(await page.locator('#walk .workflow-empty').isVisible(), true);
+    const chooserPromise = page.waitForEvent('filechooser');
+    await page.locator('#walk .workflow-empty button').click();
+    const chooser = await chooserPromise;
+    await chooser.setFiles(path.join(root, 'arisan_1.36.log'));
+    await page.waitForFunction(() => document.querySelectorAll('#filelist input[data-use]:checked').length === 1);
+    await page.locator('[data-tab="walk"]').click();
+    await page.waitForFunction(() => document.querySelector('#walk .workflow-empty').hidden);
+    assert.equal(await page.locator('#walk h2').evaluate(el => document.activeElement === el), true);
+    const reportSize = await page.evaluate(() => ({document: document.documentElement.scrollWidth, viewport: window.innerWidth}));
+    assert(reportSize.document <= reportSize.viewport + 1, `report page overflows: ${JSON.stringify(reportSize)}`);
+    const footer = page.locator('#walk .workflow-bottom-nav');
+    await footer.waitFor({state: 'visible'});
+    assert.equal(await footer.locator('button').first().isDisabled(), true);
+    await footer.locator('button').last().click();
+    assert.equal(await page.locator('#walkIndex').inputValue(), '1');
+    await page.waitForFunction(() => !document.querySelector('#walk .workflow-bottom-nav button').disabled);
+    await page.locator('[data-tab="compare"]').click();
+    assert.match(await page.locator('#pairmsg').innerText(), /two different log files/);
+    await page.locator('.language-switch').click();
+    await page.waitForFunction(() => document.querySelector('.easy-guide').textContent.includes('شروع با فایل'));
+    assert.equal(await page.locator('html').getAttribute('dir'), 'rtl');
+    assert.match(await page.locator('#compare .easy-hint').innerText(), /دو فایل متفاوت/);
+    await page.locator('[data-tab="setup"]').click();
+    await page.locator('#filelist input[data-use]').first().uncheck();
+    await page.locator('[data-tab="faults"]').click();
+    await page.waitForFunction(() => !document.querySelector('#faults .workflow-empty').hidden);
+    assert.match(await page.locator('#faults .workflow-empty').innerText(), /ابتدا یک فایل/);
+    const size = await page.evaluate(() => ({document: document.documentElement.scrollWidth, viewport: window.innerWidth}));
+    assert(size.document <= size.viewport + 1, `page overflows: ${JSON.stringify(size)}`);
+    assert.deepStrictEqual(errors, []);
+    console.log('Usability passed: empty states, file chooser, next steps, bottom navigation, Persian help, and narrow viewport.');
+  } finally { await browser.close(); }
+})().catch(e => { console.error(e); process.exitCode = 1; });
