@@ -3,6 +3,8 @@ import hashlib
 import importlib.util
 from pathlib import Path
 import tempfile
+import subprocess
+import sys
 
 root = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location('marja_can', root / 'Marja_CAN.py')
@@ -17,6 +19,17 @@ assert f'AppVersion={version.split()[1]}' in bat
 assert f'AppVerName=Marja CAN {version}' in bat
 assert hashlib.sha256(html).hexdigest() == module.DOCUMENT_SHA256
 with tempfile.TemporaryDirectory() as directory:
+    preview = Path(directory) / 'preview.html'
+    def check(data):
+        preview.write_bytes(data)
+        return subprocess.run([sys.executable, str(root / 'Marja_CAN.py'), '--check-preview', str(preview)], capture_output=True, text=True)
+    result = check(html)
+    assert result.returncode == 0 and 'match exactly' in result.stdout
+    result = check(html.replace(b'\n', b'\r\n'))
+    assert result.returncode == 0 and 'line-ending normalization' in result.stdout
+    result = check(html.replace(b'\n', b'\r\n') + b'CHANGED')
+    assert result.returncode != 0 and 'different content' in result.stderr
+    assert check(b'\xef\xbb\xbf' + html).returncode != 0
     target = module.materialize(Path(directory))
     assert target.read_bytes() == html
     target.write_bytes(b'outdated')

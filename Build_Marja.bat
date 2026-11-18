@@ -30,7 +30,7 @@ set "VENV_PY=%MARJA_WORK%\portable-venv\Scripts\python.exe"
 echo [2/5] Checking embedded HTML and desktop startup...
 rem When the standalone preview is present, refuse to package an outdated desktop embed.
 if not exist "%MARJA_ROOT%\app\index.html" goto :skipHtmlCheck
-"%VENV_PY%" -c "import hashlib,pathlib,sys,Marja_CAN; p=pathlib.Path(r'app/index.html'); ok=hashlib.sha256(p.read_bytes()).hexdigest()==Marja_CAN.DOCUMENT_SHA256; print('Desktop and HTML match.' if ok else 'ERROR: HTML and desktop differ. Run python tools/build_language.py before packaging.'); sys.exit(0 if ok else 1)" || goto :failed
+"%VENV_PY%" Marja_CAN.py --check-preview "%MARJA_ROOT%\app\index.html" || goto :failed
 :skipHtmlCheck
 "%VENV_PY%" Marja_CAN.py --smoke-test || goto :failed
 echo [3/5] Packaging the Qt WebEngine runtime...
@@ -64,8 +64,8 @@ exit /b 1
 ArchitecturesAllowed=x64
 AppId=MarjaCAN.Beta
 AppName=Marja CAN BETA
-AppVersion=1.01
-AppVerName=Marja CAN BETA 1.01
+AppVersion=1.02
+AppVerName=Marja CAN BETA 1.02
 DefaultDirName={localappdata}\Programs\MarjaCAN_BETA
 PrivilegesRequired=lowest
 DefaultGroupName=Marja CAN BETA
