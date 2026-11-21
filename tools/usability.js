@@ -5,7 +5,7 @@
   const copy = {
     en: {
       empty: 'Start by adding and enabling a log file. Then come back to this page.',
-      choose: 'Choose a log file',
+      choose: 'Choose a log file', addSecond: 'Add another log', compareMissing: 'Comparison needs two different enabled log files. Choose another file, then select a file on each side.', reviewAction: 'Review requests', compareAction: 'Compare logs', addAction: 'Add another log',
       setupEmpty: 'Next: choose a log file. For comparison, you will need two different files.',
       setupReady: 'Next: explore requests, or add a second, different file to compare.',
       hint: {walk: 'Choose a file, then use Previous and Next to move through its requests. The ID filter is optional.', compare: 'Add two different files first. Pick one on each side to compare. A difference is not automatically a fault.', canFrames: 'Choose a file. Type a CAN ID, such as 752, and choose Add ID to see its messages.', faults: 'Choose a file to see items that may need a closer look. A warning is not always a confirmed fault.'},
@@ -15,7 +15,7 @@
     },
     fa: {
       empty: 'ابتدا یک فایل لاگ اضافه و فعال کنید، سپس به این بخش برگردید.',
-      choose: 'انتخاب فایل لاگ',
+      choose: 'انتخاب فایل لاگ', addSecond: 'افزودن لاگ دیگر', compareMissing: 'برای مقایسه دو فایل لاگ متفاوت و فعال لازم است. فایل دیگری انتخاب کنید، سپس برای هر طرف یک فایل برگزینید.', reviewAction: 'مرور درخواست‌ها', compareAction: 'مقایسهٔ لاگ‌ها', addAction: 'افزودن لاگ دیگر',
       setupEmpty: 'قدم بعدی: یک فایل لاگ انتخاب کنید. برای مقایسه به دو فایل متفاوت نیاز دارید.',
       setupReady: 'قدم بعدی: درخواست‌ها را مرور کنید، یا برای مقایسه یک فایل متفاوت دیگر اضافه کنید.',
       hint: {walk: 'فایل و کانال را انتخاب کنید؛ با دکمه‌های قبلی و بعدی بین درخواست‌ها حرکت کنید. فیلتر شناسه اختیاری است.', compare: 'ابتدا دو فایل متفاوت اضافه کنید و در هر طرف یکی را انتخاب کنید. هر اختلافی الزاماً خطا نیست.', canFrames: 'فایل را انتخاب کنید، یک شناسهٔ CAN مانند 752 وارد کنید و افزودن شناسه را بزنید.', faults: 'فایل را انتخاب کنید تا موارد نیازمند بررسی نمایش داده شوند. هشدار الزاماً به معنی خطای قطعی نیست.'},
@@ -30,6 +30,17 @@
   const next = document.createElement('p');
   next.className = 'workflow-next'; next.setAttribute('role', 'status');
   byId('filelist').after(next);
+  const quick = document.createElement('div'); quick.className = 'workflow-quick';
+  // Reuse the original actions rather than displaying duplicate controls.
+  const review = byId('openWalk'), compare = byId('go'), oldActions = review.parentElement;
+  const add = document.createElement('button'); add.type = 'button';
+  add.addEventListener('click', () => byId('logs').click());
+  quick.append(review, compare, add); oldActions.hidden = true; next.after(quick);
+  const compareHelp = document.createElement('div'); compareHelp.className = 'compare-help'; compareHelp.hidden = true;
+  const compareText = document.createElement('p'), compareAdd = document.createElement('button'); compareAdd.type = 'button';
+  compareAdd.addEventListener('click', () => { document.querySelector('[data-tab="setup"]').click(); byId('logs').click(); });
+  compareHelp.append(compareText, compareAdd); hintNodes.compare.after(compareHelp);
+
   const emptyNodes = {};
   for (const id of sections) {
     const box = document.createElement('div'); box.className = 'workflow-empty'; box.hidden = true;
@@ -60,6 +71,13 @@
     scheduled = false;
     const lang = document.documentElement.lang === 'fa' ? 'fa' : 'en', t = copy[lang];
     const active = !!document.querySelector('#filelist input[data-use]:checked');
+    let files = 0;
+    try { if (typeof activeRuns === 'function') files = new Set(activeRuns().map(run => run.fileKey)).size; } catch (_) {}
+    quick.hidden = !active;
+    review.textContent = t.reviewAction; compare.textContent = t.compareAction; add.textContent = t.addAction;
+    compareHelp.hidden = files >= 2 || !active;
+    compareText.textContent = t.compareMissing; compareAdd.textContent = t.addSecond;
+
     guide.hidden = false;
     const title = document.createElement('strong'); title.textContent = t.guideTitle;
     const list = document.createElement('ol');

@@ -9,7 +9,8 @@ const {chromium}=require('playwright-core'), assert=require('assert'), path=requ
   assert.match(await page.locator('.task-card').nth(0).innerText(),/Record a log/);
   await page.locator('.task-card').nth(0).click(); assert.match(await page.locator('#capture-import-status').innerText(),/desktop app/);
   const chooser=page.waitForEvent('filechooser'); await page.locator('.task-card').nth(1).click(); await (await chooser).setFiles(path.resolve('arisan_1.36.log'));
-  await page.waitForFunction(()=>document.querySelectorAll('#filelist input[data-use]:checked').length===1);
+  await page.waitForFunction(()=>document.querySelectorAll('#filelist input[data-use]:checked').length===1 && !document.querySelector('#walk').hidden);
+  await page.locator('[data-tab="setup"]').click();
   await page.locator('.task-card').nth(2).click(); assert(await page.locator('#compare').isVisible());
   await page.locator('[data-tab="setup"]').click();
   const text='***BUSMASTER Ver 3.2.2***\n***PROTOCOL CAN***\n***HEX***\n12:00:01:000100 Rx 1 0x752 s 8 03 22 FD 3F FF FF FF FF\n12:00:01:001100 Rx 1 0x652 s 8 04 62 FD 3F 00 FF FF FF\n';

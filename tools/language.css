@@ -21,9 +21,9 @@ html[lang="en"] button:focus-visible, html[lang="en"] select:focus-visible, html
 .easy-guide ol { padding-inline-start: 1.5em; }
 .easy-hint { padding: 12px 16px; background: #f0f7ff; border-inline-start: 4px solid #408acb; border-radius: 6px; line-height: 1.55; }
 .workflow-next { background: #eef7f1; border-inline-start: 4px solid #3d7861; padding: 10px 14px; border-radius: 6px; line-height: 1.55; }
-.workflow-empty { background: #fff8e8; border: 1px solid #dbb562; border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
-.workflow-empty p { margin: 0 0 8px; }
-.workflow-empty button { min-height: 44px; background: #6b3b26; color: #fff; font-weight: 700; }
+.workflow-empty, .compare-help { background: #fff8e8; border: 1px solid #dbb562; border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+.workflow-empty p, .compare-help p { margin: 0 0 8px; }
+.workflow-empty button, .compare-help button { min-height: 44px; background: #6b3b26; color: #fff; font-weight: 700; }
 /* Avoid a hidden second scroll area in the detailed request report. */
 #walkReport { height: auto; min-height: 0; overflow: visible; }
 .pairscroll { height: auto; min-height: 0; }
@@ -89,3 +89,11 @@ html[lang="en"] button:focus-visible, html[lang="en"] select:focus-visible, html
 .review-verdict.red, .validation.review-red, .notice.review-red { background: #ffd4d1; color: #680c0c; border-color: #c4151c; }
 .review-verdict.gray, .validation.review-gray, .notice.review-gray { background: #dce4eb; color: #203747; border-color: #587080; }
 .release-badge { display: inline-block; margin-top: 6px; padding: 4px 10px; border: 1px solid #b26c16; border-radius: 999px; background: #fff0d3; color: #603400; font: 700 12px/1.2 system-ui, sans-serif; letter-spacing: .04em; }
+/* Actionable next steps, with matching keyboard focus in both languages. */
+.workflow-quick { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 16px; }
+.workflow-quick[hidden] { display: none; }
+.workflow-quick button { min-height: 44px; font-weight: 600; }
+.workflow-quick button:first-child { color: #fff; background: #205c86; border-color: #205c86; }
+button:focus-visible, select:focus-visible, input:focus-visible, .upload:focus-within { outline: 3px solid #0869ba; outline-offset: 2px; }
+.task-grid .task-card:focus-visible { outline: 3px solid #ffcb5b; outline-offset: 3px; }
+#capture-import-status:not([hidden]) { margin-top: 16px; padding: 10px 12px; background: #eaf5ff; color: #173a59; border-radius: 7px; line-height: 1.5; }

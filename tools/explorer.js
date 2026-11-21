@@ -4,7 +4,7 @@
   const copy = {
     en: {
       heading: 'What would you like to do?', sub: 'Choose a task. You can change your choice at any time.',
-      capture: 'Record a log', captureDesc: 'Connect a serial or paired Bluetooth SPP source.', open: 'Open a log', openDesc: 'Choose a recorded file to review.', desktopOnly: 'Live capture is available in the desktop app; here you can open a saved log.',
+      capture: 'Record a log', captureDesc: 'Connect a serial or paired Bluetooth SPP source.', open: 'Open a log', openDesc: 'Choose a recorded file to review.', desktopOnly: 'Live capture is available in the desktop app; here you can open a saved log.', openFailed: 'No new log was added. Check the message below and choose a supported .log or .blf file.', loadFailed: 'The app did not finish loading. Refresh the page and try again.',
       review: 'Review one log', reviewDesc: 'Explore requests, replies and possible issues.',
       compare: 'Compare two logs', compareDesc: 'Find differences between two recordings.',
       frames: 'Find CAN messages', framesDesc: 'Inspect messages by CAN identifier.',
@@ -26,7 +26,7 @@
     },
     fa: {
       heading: 'می‌خواهید چه کاری انجام دهید؟', sub: 'یک مسیر را انتخاب کنید؛ هر زمان می‌توانید مسیر را عوض کنید.',
-      capture: 'ضبط لاگ', captureDesc: 'اتصال منبع سریال یا بلوتوث SPP جفت‌شده.', open: 'باز کردن لاگ', openDesc: 'فایل ثبت‌شده را برای بررسی انتخاب کنید.', desktopOnly: 'ضبط زنده در برنامهٔ دسکتاپ است؛ در این صفحه می‌توانید لاگ ذخیره‌شده را باز کنید.',
+      capture: 'ضبط لاگ', captureDesc: 'اتصال منبع سریال یا بلوتوث SPP جفت‌شده.', open: 'باز کردن لاگ', openDesc: 'فایل ثبت‌شده را برای بررسی انتخاب کنید.', desktopOnly: 'ضبط زنده در برنامهٔ دسکتاپ است؛ در این صفحه می‌توانید لاگ ذخیره‌شده را باز کنید.', openFailed: 'لاگ جدیدی اضافه نشد. پیام پایین را بررسی و یک فایل .log یا .blf پشتیبانی‌شده انتخاب کنید.', loadFailed: 'برنامه کامل بارگذاری نشد. صفحه را تازه‌سازی و دوباره تلاش کنید.',
       review: 'بررسی یک لاگ', reviewDesc: 'مرور درخواست‌ها، پاسخ‌ها و موارد نیازمند بررسی.',
       compare: 'مقایسهٔ دو لاگ', compareDesc: 'پیداکردن تفاوت‌های دو فایل ثبت‌شده.',
       frames: 'جست‌وجوی پیام‌های CAN', framesDesc: 'دیدن پیام‌ها با شناسهٔ CAN.',
@@ -61,12 +61,50 @@
       if (id === 'capture') {
         if (window.CANDesktop === true) window.location.href = 'marja://capture';
         else { status.hidden = false; status.textContent = copy[lang()].desktopOnly; }
-      } else if (id === 'open') $('logs').click();
+      } else if (id === 'open') { openIntent = true; $('logs').click(); }
       else if ($(id).hidden) document.querySelector(`[data-tab="${id}"]`).click();
     });
     grid.append(button); return {button, label, text, key, desc};
   });
   const status = document.createElement('p'); status.id = 'capture-import-status'; status.hidden = true; status.setAttribute('role', 'status');
+  // The explicit Open task continues to the newly added log; the ordinary
+  // file chooser and desktop capture handoff retain their existing behavior.
+  let openIntent = false, attempts = 0;
+  const openButton = buttons.find(item => item.key === 'open').button; openButton.disabled = true;
+  const input = $('logs');
+  input.addEventListener('cancel', () => { openIntent = false; });
+  function attachImportHandler() {
+    const original = input.onchange;
+    if (typeof original !== 'function') {
+      if (++attempts < 600) setTimeout(attachImportHandler, 100);
+      else { status.hidden = false; status.textContent = copy[lang()].loadFailed; }
+      return;
+    }
+    input.onchange = async function(event) {
+      const shouldOpen = openIntent; openIntent = false;
+      const before = shouldOpen && typeof activeRuns === 'function' ? new Set(activeRuns().map(r => r.uid)) : null;
+      try {
+        const result = await original.call(this, event);
+        if (shouldOpen && before) {
+          const added = activeRuns().find(run => !before.has(run.uid));
+          if (added) {
+            status.hidden = true;
+            document.querySelector('[data-tab="walk"]').click();
+            const select = $('walkRun');
+            if ([...select.options].some(option => option.value === String(added.uid))) {
+              select.value = String(added.uid); select.dispatchEvent(new Event('change', {bubbles:true}));
+            }
+          } else { status.hidden = false; status.textContent = copy[lang()].openFailed; }
+        }
+        return result;
+      } catch (error) {
+        if (shouldOpen) { status.hidden = false; status.textContent = copy[lang()].openFailed; }
+        throw error;
+      }
+    };
+    input.dataset.workflowReady = 'true'; openButton.disabled = false;
+  }
+  attachImportHandler();
   card.append(title, sub, grid, status); document.querySelector('#setup .easy-guide').before(card);
   const panels = {};
   for (const [id, anchor] of [['walk','walkReport'], ['faults','faultList']]) {
