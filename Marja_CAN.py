@@ -8,10 +8,10 @@ from pathlib import Path
 import sys
 import tempfile
 
-APP_VERSION = "BETA 1.03"
+APP_VERSION = "BETA 1.04"
 
 # Compressed distribution HTML; changing the embedded document requires a new digest.
-DOCUMENT_SHA256 = "cd1843e1e45c4468ec3880c0687516beba1008f252d06d8053c1d091b22297ef"
+DOCUMENT_SHA256 = "c059b86d3d42dff1d64e8706199529d2f15b58317ad3064b453cb083d6cde5b8"
 DOCUMENT = (
     b"H4sIAAAAAAACA8S827LqTLYeeN9P8XddOULeIc6H7aodnSmlTkigFBJCugOBUiBAgIAEfGu3fdHvYfdFx46OtqPv+ymq7JfpkRJzTub616pyxY6Onv9hzmQo"
     b"U6mR4/B9IxP98X9eFcnlcVz/ll32u3/6o/j/b7vFgf3pD+niD7+tNuc//eF82f3hn/64X18WvyXZ4lyuL3/6w/WS/sPg49PDYr/+0x9umzU/FufLH35LisNl"
@@ -2280,7 +2280,7 @@ DOCUMENT = (
     b"y3E8YAiG0ft9JN+5dF4u05bA5VYey4O1kmdFvDpgVq/621O5bM2NU2JdlWLKmM+oMTdZ2re5bj99N2toibOiLiCIBxywhXCg77VuLp2Dj+Qa1vvpYhjbLEBW"
     b"yElmrtZUv65lZp3g/oYkr2DedDZT3UCL2Wr6PSf8+HidPy4IEZ3nDUw5KNGReE9M/yiaLsgHdGsxzI8/eXDS9sefvPn9m1+/+ae3v/gv/+Ov3v7r21/+5Vdv"
     b"/vDJT35U/uTtL8H1f3zz5cPbz97+4u3nb7588/u//Ap8ANf++PaXb3/+o3n5kx9F8E/e/ObNV+Df282fv/n1n798ePOHN7/58z+8/cXDljj+aA6G/KgpnfwB"
-    b"kMOm+fEndZAGThP8wHX8MPjkwY/rH3+StvUnP9lQKvEAfwotfjSfxv/kR3M/voA/o8Dxg/onP8qcGFzMnctD7P/4k9ZxGyCn27VtkT/4Tuv8AFz68SdN0Hbl"
+    b"kMOm+fEndZAGThP8wHX8MPjkwY/rH3+StvUnP9lQKvEAfwotfzSfxv/kR3M/voA/o8Dxg/onP8qcGFzMnctD7P/4k9ZxGyCn27VtkT/4Tuv8AFz68SdN0Hbl"
     b"Jz95+9M3v/7Lr97+fDrVL978+uHtLyfRv3z784e3P3vzz2/+9PYXP5rf535kjd5JE7DEZ2++Akr46gEc/as3v7vp4/dvvnhc8Rume0VWOnUwrQA2A2K8+T3Q"
     b"4N8/quc7zHfyXe1kQXM7xlfgGJ89TgI6vun0a6eenC5twbw3vwOHnHb+9ZvfvAyfA+UBYwReG4NZkxYfxz9Ese8HYATQ+JOdSqcMgFV+FCHvrPZ4CmAW5Cc/"
     b"Sh03SJ91PSn5z//w5tfAWX4NPoGNUrDVyz5yl4P15vfL4D/us297Po/h4qb95Nn09z8fBf7J37wj+qOhPybyq0uu83iGd5QP9PjmPwKn/ww48uevjvI0qyvT"
@@ -12779,7 +12779,7 @@ DOCUMENT = (
     b"+1+yId26vF9/lz5f4Jrzbf7z6De//vWCX3/2+OvH3635ubJDvz7NT78+P35xnzNcng5ZPv/mt7/L/vLpNz8XiOl/dvs/lpMhu34Xj2PeZ7/5q62n+e9/+3RJ"
     b"4zWtfvOb3/7y+7/75d/9dWD97/9/IxqfwfS/W/KVWde5TrY1/82v89Dmv/7bX+M2n9e/NP9fg/z9rz/+648//vgf//JPP/75x5/+/A+/PIf//Od/+PHHP//h"
     b"z//plx9/+vHPv/z447/+49Pw5z88Df/5xz//y89zT+sf/uWffp79hx//68effvfLn//9Xy77j788Zv7489r/+eO//fk/PGf+8Jj6L3819P9Y+PHff/zpX//x"
-    b"x59++ev9f/lp7efx7379m//XJ+Oc/8Up/W///rd/87fgX33zd38LVmvX/t3/BqYAofd+ny4A"
+    b"x59++ev9f/lp7efx7379m//XJ+Oc/8Up/W///rd/87fgX33zd38LVmvX/t3/BrH9VhF+ny4A"
 )
 
 
@@ -12827,7 +12827,9 @@ def check_preview(path: Path) -> int:
         return 0
     print('ERROR: HTML and desktop contain different content.', file=sys.stderr)
     print('Use files from the same release, or rebuild with:', file=sys.stderr)
-    print('  build-marja\\portable-venv\\Scripts\\python.exe tools\\build_language.py', file=sys.stderr)
+    python = os.environ.get('VENV_PY')
+    command = f'"{python}"' if python else 'py -3'
+    print(f'  {command} tools\\build_language.py', file=sys.stderr)
     print('The rebuild requires VERSION, the original distribution HTML, and the tools folder.', file=sys.stderr)
     return 1
 
