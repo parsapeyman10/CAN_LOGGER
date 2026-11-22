@@ -2,6 +2,9 @@
 setlocal EnableExtensions DisableDelayedExpansion
 pushd "%~dp0" || exit /b 1
 set "MARJA_ROOT=%CD%"
+set "MARJA_VERSION=1.05"
+echo Building Marja CAN BETA %MARJA_VERSION%
+echo Source folder: "%MARJA_ROOT%"
 set "MARJA_OUT=%MARJA_ROOT%\installer"
 set "MARJA_SELF=%~f0"
 if not exist "Marja_CAN.py" goto :sourceMissing
@@ -37,7 +40,8 @@ powershell -NoProfile -Command "$ErrorActionPreference='Stop'; [Net.ServicePoint
 "%MARJA_UV%" venv --managed-python --python 3.12 "%MARJA_WORK%\portable-venv" || goto :failed
 set "VENV_PY=%MARJA_WORK%\portable-venv\Scripts\python.exe"
 "%MARJA_UV%" pip install --python "%VENV_PY%" "PyQt6>=6.8,<7" "PyQt6-WebEngine>=6.8,<7" "pyserial>=3.5,<4" "PyInstaller>=6.11,<7" || goto :failed
-echo [2/5] Checking embedded HTML and desktop startup...
+echo [2/5] Checking version, embedded HTML and desktop startup...
+"%VENV_PY%" -c "import Marja_CAN,os,sys; f=getattr(Marja_CAN,'check_build_version',None); sys.exit(f(os.environ['MARJA_VERSION']) if callable(f) else 1)" || goto :versionFailed
 rem When the standalone preview is present, refuse to package an outdated desktop embed.
 if not exist "%MARJA_ROOT%\app\index.html" goto :skipHtmlCheck
 "%VENV_PY%" Marja_CAN.py --check-preview "%MARJA_ROOT%\app\index.html" || goto :failed
@@ -48,8 +52,8 @@ echo [3/5] Packaging the Qt WebEngine runtime...
 echo [4/5] Testing packaged executable...
 "%VENV_PY%" -c "import os, pathlib, subprocess; exe=pathlib.Path(os.environ['MARJA_WORK'])/'dist'/'MarjaCAN'/'MarjaCAN.exe'; subprocess.run([str(exe),'--smoke-test'],check=True,timeout=90)" || goto :failed
 echo [5/5] Creating portable ZIP...
-"%VENV_PY%" -c "import pathlib,shutil,os; out=pathlib.Path(os.environ['MARJA_OUT']); base=out/'MarjaCAN_BETA_Portable_x64'; archive=shutil.make_archive(str(base)+'.tmp','zip',pathlib.Path(os.environ['MARJA_WORK'])/'dist','MarjaCAN'); os.replace(archive,base.with_suffix('.zip'))" || goto :failed
-echo Portable ZIP ready: "%MARJA_OUT%\MarjaCAN_BETA_Portable_x64.zip"
+"%VENV_PY%" -c "import pathlib,shutil,os; out=pathlib.Path(os.environ['MARJA_OUT']); base=out/('MarjaCAN_BETA_'+os.environ['MARJA_VERSION']+'_Portable_x64'); archive=shutil.make_archive(str(base)+'.tmp','zip',pathlib.Path(os.environ['MARJA_WORK'])/'dist','MarjaCAN'); os.replace(archive,str(base)+'.zip')" || goto :failed
+echo Portable ZIP ready: "%MARJA_OUT%\MarjaCAN_BETA_%MARJA_VERSION%_Portable_x64.zip"
 if defined ISCC goto :installer
 echo Inno Setup 6 was not found. The portable ZIP is ready to distribute.
 goto :success
@@ -57,13 +61,17 @@ goto :success
 echo Compiling optional installer...
 powershell -NoProfile -Command "$lines=[IO.File]::ReadAllLines($env:MARJA_SELF); $n=[Array]::IndexOf($lines,':INNO_SCRIPT'); if($n -lt 0){exit 1}; [IO.File]::WriteAllLines((Join-Path $env:MARJA_WORK 'Marja.iss'),$lines[($n+1)..($lines.Length-1)])" || goto :failed
 "%ISCC%" "%MARJA_WORK%\Marja.iss" || goto :failed
-echo Installer ready: "%MARJA_OUT%\MarjaCAN_BETA_Setup.exe"
+echo Installer ready: "%MARJA_OUT%\MarjaCAN_BETA_%MARJA_VERSION%_Setup.exe"
 :success
 echo Build completed. Temporary files remain in "%MARJA_WORK%".
 echo You can delete that folder later when no build is running.
 popd
 pause
 exit /b 0
+:versionFailed
+echo ERROR: The BAT and Python source are not from the same release.
+echo Download or update the complete project, then run this BAT again.
+goto :failed
 :sourceMissing
 echo Put Marja_CAN.py and live_capture.py next to this BAT file.
 goto :failed
@@ -78,15 +86,15 @@ exit /b 1
 ArchitecturesAllowed=x64
 AppId=MarjaCAN.Beta
 AppName=Marja CAN BETA
-AppVersion=1.04
-AppVerName=Marja CAN BETA 1.04
+AppVersion=1.05
+AppVerName=Marja CAN BETA 1.05
 DefaultDirName={localappdata}\Programs\MarjaCAN_BETA
 PrivilegesRequired=lowest
 DefaultGroupName=Marja CAN BETA
 DisableProgramGroupPage=yes
 UninstallDisplayIcon={app}\MarjaCAN.exe
 OutputDir={#GetEnv("MARJA_OUT")}
-OutputBaseFilename=MarjaCAN_BETA_Setup
+OutputBaseFilename=MarjaCAN_BETA_1.05_Setup
 Compression=lzma2/fast
 SolidCompression=yes
 WizardStyle=modern

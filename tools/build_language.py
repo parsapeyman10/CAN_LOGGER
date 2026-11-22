@@ -52,6 +52,10 @@ build_script, count = re.subn(r'(?m)^AppVersion=[^\r\n]+', 'AppVersion=' + versi
 assert count == 1
 build_script, count = re.subn(r'(?m)^AppVerName=[^\r\n]+', 'AppVerName=Marja CAN ' + version, build_script)
 assert count == 1
+build_script, count = re.subn(r'(?m)^set "MARJA_VERSION=[^"\r\n]+"', 'set "MARJA_VERSION=' + version.split()[1] + '"', build_script)
+assert count == 1
+build_script, count = re.subn(r'(?m)^OutputBaseFilename=[^\r\n]+', 'OutputBaseFilename=MarjaCAN_BETA_' + version.split()[1] + '_Setup', build_script)
+assert count == 1
 with bat.open('w', encoding='utf-8', newline='') as f:
     f.write(build_script)
 print('Built', len(data), 'bytes, sha256', hashlib.sha256(data).hexdigest())
