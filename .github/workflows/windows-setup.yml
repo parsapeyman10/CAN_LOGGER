@@ -1,0 +1,29 @@
+name: Build Windows beta installer
+
+on:
+  push:
+    branches:
+      - 'arena/e69a999f-can-logger'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and verify Windows installer
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Build and test the installer
+        shell: cmd
+        run: call Build_Marja.bat < NUL
+      - name: Upload standalone installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarjaCAN-Windows-Beta-Installer
+          path: installer/*_Installer.exe
+          if-no-files-found: error
+          retention-days: 14

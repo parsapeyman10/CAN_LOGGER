@@ -2,7 +2,7 @@
 setlocal EnableExtensions DisableDelayedExpansion
 pushd "%~dp0" || exit /b 1
 set "MARJA_ROOT=%CD%"
-set "MARJA_VERSION=1.06"
+set "MARJA_VERSION=1.07"
 echo Building Marja CAN BETA %MARJA_VERSION%
 echo Source folder: "%MARJA_ROOT%"
 set "MARJA_OUT=%MARJA_ROOT%\installer"
@@ -104,15 +104,15 @@ exit /b 1
 ArchitecturesAllowed=x64
 AppId=MarjaCAN.Beta
 AppName=Marja CAN BETA
-AppVersion=1.06
-AppVerName=Marja CAN BETA 1.06
+AppVersion=1.07
+AppVerName=Marja CAN BETA 1.07
 DefaultDirName={localappdata}\Programs\MarjaCAN_BETA
 PrivilegesRequired=lowest
 DefaultGroupName=Marja CAN BETA
 DisableProgramGroupPage=yes
 UninstallDisplayIcon={app}\MarjaCAN.exe
 OutputDir={#GetEnv("MARJA_OUT")}
-OutputBaseFilename=MarjaCAN_BETA_1.06_Setup
+OutputBaseFilename=MarjaCAN_BETA_1.07_Setup
 Compression=lzma2/fast
 SolidCompression=yes
 WizardStyle=modern
