@@ -22,5 +22,10 @@ assert 'set "MARJA_VERSION=' in text and 'check_build_version' in text
 assert "os.replace(archive,str(base)+'.zip')" in text
 assert 'MarjaCAN_BETA_%MARJA_VERSION%_Portable_x64.zip' in text
 assert f'OutputBaseFilename=MarjaCAN_BETA_{(root / "VERSION").read_text().split()[1]}_Setup' in text
+assert 'if not exist "installer_bootstrap.py" goto :sourceMissing' in text
+assert 'PyInstaller --noconfirm --onefile --windowed' in text
+assert '--self-test' in text and 'installer_payload.zip' in text
+assert 'MarjaCAN_BETA_%MARJA_VERSION%_Installer.exe' in text
+assert 'Setup.exe"\ngoto :success\n:innoFailed' in text
 assert 'Marja_CAN.py --check-preview' in text and '--smoke-test' in text
 print('Windows build script checks passed (static only; actual Windows build not run).')

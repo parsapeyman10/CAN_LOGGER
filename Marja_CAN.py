@@ -8,10 +8,10 @@ from pathlib import Path
 import sys
 import tempfile
 
-APP_VERSION = "BETA 1.05"
+APP_VERSION = "BETA 1.06"
 
 # Compressed distribution HTML; changing the embedded document requires a new digest.
-DOCUMENT_SHA256 = "87ffac491028b8c9fc4b25e7bec9b4fd0d54a868b0441518972f43fc22c3e2a9"
+DOCUMENT_SHA256 = "d85478f9f42119823bcdeec3cfc161ea921cd12df30557951cf8d358eacb68ee"
 DOCUMENT = (
     b"H4sIAAAAAAACA8S827LqTLYeeN9P8XddOULeIc6H7aodnSmlTkigFBJCugOBUiBAgIAEfGu3fdHvYfdFx46OtqPv+ymq7JfpkRJzTub616pyxY6Onv9hzmQo"
     b"U6mR4/B9IxP98X9eFcnlcVz/ll32u3/6o/j/b7vFgf3pD+niD7+tNuc//eF82f3hn/64X18WvyXZ4lyuL3/6w/WS/sPg49PDYr/+0x9umzU/FufLH35LisNl"
@@ -2280,7 +2280,7 @@ DOCUMENT = (
     b"y3E8YAiG0ft9JN+5dF4u05bA5VYey4O1kmdFvDpgVq/621O5bM2NU2JdlWLKmM+oMTdZ2re5bj99N2toibOiLiCIBxywhXCg77VuLp2Dj+Qa1vvpYhjbLEBW"
     b"yElmrtZUv65lZp3g/oYkr2DedDZT3UCL2Wr6PSf8+HidPy4IEZ3nDUw5KNGReE9M/yiaLsgHdGsxzI8/eXDS9sefvPn9m1+/+ae3v/gv/+Ov3v7r21/+5Vdv"
     b"/vDJT35U/uTtL8H1f3zz5cPbz97+4u3nb7588/u//Ap8ANf++PaXb3/+o3n5kx9F8E/e/ObNV+Df282fv/n1n798ePOHN7/58z+8/cXDljj+aA6G/KgpnfwB"
-    b"kMOm+fEndZAGThP8wHX8MPjkwY/rH3+StvUnP9lQKvEAfwqhP5pP43/yo7kfX8CfUeD4Qf2TH2VODC7mzuUh9n/8Seu4DZDT7dq2yB98p3V+AC79+JMmaLvy"
+    b"kMOm+fEndZAGThP8wHX8MPjkwY/rH3+StvUnP9lQKvEAfwphP5pP43/yo7kfX8CfUeD4Qf2TH2VODC7mzuUh9n/8Seu4DZDT7dq2yB98p3V+AC79+JMmaLvy"
     b"k5+8/embX//lV29/Pp3qF29+/fD2l5PoX779+cPbn7355zd/evuLH83vcz+yRu+kCVjiszdfASV89QCO/tWb39308fs3Xzyu+A3TvSIrnTqYVgCbATHe/B5o"
     b"8O8f1fMd5jv5rnayoLkd4ytwjM8eJwEd33T6tVNPTpe2YN6b34FDTjv/+s1vXobPgfKAMQKvjcGsSYuP4x+i2PcDMAJo/MlOpVMGwCo/ipB3Vns8BTAL8pMf"
     b"pY4bpM+6npT8539482vgLL8Gn8BGKdjqZR+5y8F68/tl8B/32bc9n8dwcdN+8mz6+5+PAv/kb94R/dHQHxP51SXXeTzDO8oHenzzH4HTfwYc+fNXR3ma1ZVp"
@@ -12779,7 +12779,7 @@ DOCUMENT = (
     b"/S/ZkG5d3q+/S58vcM35Nv959Jtf/3rBrz97/PXj79b8XNmhX5/mp1+fH7+4zxkuT4csn3/z299lf/n0m58LxPQ/u/0fy8mQXb+LxzHvs9/81dbT/Pe/fbqk"
     b"8ZpWv/nNb3/5/d/98u/+OrD+9/+/EY3PYPrfLfnKrOtcJ9ua/+bXeWjzX//tr3Gbz+tfmv+vQf7+1x//9ccff/yPf/mnH//8409//odfnsN//vM//Pjjn//w"
     b"5//0y48//fjnX3788V//8Wn48x+ehv/845//5ee5p/UP//JPP8/+w4//9eNPv/vlz//+L5f9x18eM3/8ee3//PHf/vwfnjN/eEz9l78a+n8s/PjvP/70r//4"
-    b"40+//PX+v/y09vP4d7/+zf/rk3HO/+KU/rd//9u/+Vvwr775u78Fq7Vr/+5/Ay0BLP9+ny4A"
+    b"40+//PX+v/y09vP4d7/+zf/rk3HO/+KU/rd//9u/+Vvwr775u78Fq7Vr/+5/A8gC0hZ+ny4A"
 )
 
 
